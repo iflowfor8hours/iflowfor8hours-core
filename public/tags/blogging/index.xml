@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>iflowfor8hours.info</title>
+    <link>http://localhost/tags/blogging/index.xml</link>
+    <description>Recent content on iflowfor8hours.info</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>2016, matt urbanski</copyright>
+    <atom:link href="http://localhost/tags/blogging/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Migrating From a Static Ubuntu to Containerized Infrastructure</title>
+      <link>http://localhost/post/2016/2016-12-06-migrating-to-containers/</link>
+      <pubDate>Wed, 07 Dec 2016 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost/post/2016/2016-12-06-migrating-to-containers/</guid>
+      <description>&lt;p&gt;The time has come to move off my statically hosted ubuntu box on Digital Ocean and on to a more modern and containerized stack.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Why?&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;My Digital Ocean box was 32-bit Ubuntu, and I had not done much in terms of maintaining it in a while. I considered upgrading it, but the configuration was a &lt;em&gt;work of art&lt;/em&gt; and my work with CoreOS and containers in my dayjob inspired me to move to something more modern. I didn&amp;rsquo;t want to go the Ansible plus static infrastructure route, since I have been migrating clients off that for a few years now. I wanted to run a few other applications in containers as well so I thought this would be a good starting point. I have done this type of work frequently for entire enterprises, so this was the obvious choice. I&amp;rsquo;m documenting it because it was a fun exercise and others might benefit from it. Here is the existing infrastructure and pipeline:&lt;/p&gt;
+
+&lt;p&gt;Github -&amp;gt; Codeship Pipeline to hugo build, smoke test, then rsync artifacts -&amp;gt; Digital Ocean box with NGINX and Let&amp;rsquo;s Encrypt SSL&lt;/p&gt;
+
+&lt;p&gt;Simple setup. I didn&amp;rsquo;t really like the rsync in the pipeline, or NGINX being non-configuration managed, but it worked and was comfortable.&lt;/p&gt;
+
+&lt;p&gt;Here is the desired state:&lt;/p&gt;
+
+&lt;p&gt;Github push -&amp;gt; something Hugo build -&amp;gt; something Container packaging -&amp;gt; Ship to containerized host -&amp;gt; Decomission previous nginx container.&lt;/p&gt;
+
+&lt;p&gt;I also wanted to put let&amp;rsquo;s encrypt into its own container for bonus points, and so that I could run the same artifact locally and remotely.&lt;/p&gt;
+
+&lt;p&gt;I got started by doing a basic local nginx container that mounted my generated hugo source by mounting it. This is for my quick iterative development workflow.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;  #!/bin/bash
+  hugo --cleanDestinationDir --baseURL http://localhost/
+  chmod -R 777 public
+  docker stop iflowfor8hours-nginx-sidecar
+  docker rm -f iflowfor8hours-nginx-sidecar
+  docker run --name iflowfor8hours-nginx-sidecar -v &amp;quot;$PWD&amp;quot;/public:/usr/share/nginx/html -v &amp;quot;$PWD&amp;quot;/dev/nginx.conf:/etc/nginx/nginx.conf:ro -p 80:80 nginx:alpine
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;chmod -R 777&lt;/code&gt; is ugly, but I&amp;rsquo;m not concerned with anything getting broken since this is generated code and only used locally.&lt;/p&gt;
+
+&lt;p&gt;The next phase involved creating the container that I would use in production. I didn&amp;rsquo;t want to bake the let&amp;rsquo;s encrypt stuff into the container because I felt that it violated the concept of small, single purpose containers. I wrote a minimal &lt;code&gt;Dockerfile&lt;/code&gt; first and built it by hand.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;FROM nginx:alpine
+COPY public /usr/share/nginx/html
+RUN chown -R nginx:nginx /usr/share/nginx/html
+COPY dev/nginx.conf /etc/nginx/nginx.conf
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I&amp;rsquo;m using nginx:alpine because I was considering using &lt;a href=&#34;https://hyper.sh&#34;&gt;hyper.sh&lt;/a&gt; to host my containers, and still might. I wanted to keep it as small as possible since this is only going to be serving static html. This was another reason for the added complexity cost of putting let&amp;rsquo;s encrypt in another container.&lt;/p&gt;
+
+&lt;p&gt;I then wrote the script for building the content and the container. I figured I might as well do this now, as the CI system will need some kind of entrypoint. This also helped me iterate quickly on my local box.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;#!/bin/bash
+# Create a production and non-prod BASEURL environment variable in pipeline configuration
+
+if [ -z &amp;quot;${BASEURL}&amp;quot; ]; then 
+    HUGO_BASEURL=&#39;http://localhost/&#39;
+else 
+    HUGO_BASEURL=${BASEURL}
+fi
+
+env HUGO_BASEURL=${HUGO_BASEURL} hugo --cleanDestinationDir
+docker build -t iflowfor8hours:blog .
+echo docker run --name bakedblog -p 80:80 iflowfor8hours:blog
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I played with that for a bit, and everything works as expected. Now I need to get lets encrypt working. Since certs are free and I already own my domain, I can afford to have an https enabled staging environment. I now needed to decide on a docker hosting environment and platform. The easiest way to get up and running with containerized infrastructure is CoreOS, hands down. I spun up a coreos box on DO and then reconfigured my DNS to point it at.&lt;/p&gt;
+
+&lt;p&gt;The next phase will be to setup the pipeline and finally deploy my containers to the newly provisioned container host.&lt;/p&gt;
+
+&lt;p&gt;I also plan on migrating to IPv6 when the hosts are setup properly.&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

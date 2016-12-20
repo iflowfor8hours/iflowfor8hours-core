@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+
+
+
+ <html class="no-js"> 
+<head>
+    <title>Opscode Community Summit 2012 &middot; iflowfor8hours.info</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="content-language" content="en-us" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="author" content="Matt Urbanski">
+    <meta name="description" content="devops, automation, webops and explosions.">
+    <meta name="generator" content="Hugo 0.17-DEV" />
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" type="text/css" href="http://localhost/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/styles/tomorrow.min.css" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700|Lora:400,700,400italic" rel="stylesheet" type="text/css">
+</head>
+<body>
+    
+    <div class="off-canvas">
+    <figure class="avatar">
+        <img src="http://localhost/img/avatar.jpg" title="Matt Urbanski">
+    </figure>
+    <div class="bio">
+        
+        <h1>matt urbanski</h1>
+        
+        
+        <p>Shot the horse after the door has bolted</p>
+        
+    </div>
+    <nav>
+        
+
+        <ul>
+            <li><a target="_blank" href="http://localhost/index.xml">RSS feed</a></li>
+        </ul>
+
+        
+        <h6>you can find me on the block in addition to</h6>
+        
+
+        <ul>
+        
+            <li><a target="_blank" href="mailto:matt@iflowfor8hours.info">Email</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/MattUrbanski.pdf">CV</a></li>
+        
+            <li><a target="_blank" href="//github.com/iflowfor8hours">Github</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/presentations/">Presentations and Published work</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/colophon/">Colophon and About Me</a></li>
+        
+        </ul>        
+    </nav>
+</div>
+
+    <div class="site-wrapper">
+        <header>
+	<div class="h-wrap">
+		
+		<h1 class="title"><a href="http://localhost/">iflowfor8hours.info</a></h1>
+		
+		<a class="menu-icon" title="Menu"><span class="lines"></span></a>
+	</div>
+</header>
+        
+        <section class="single-wrap">
+            <article class="single-content" itemscope itemtype="//schema.org/BlogPosting">
+                <div class="feat">
+                    <h5 class="page-date">
+                    <time datetime="" itemprop="datePublished">
+                    2. November 2012
+                    </time>
+                    </h5>
+                </div>
+                <h1 class="page-title" itemprop="name headline">Opscode Community Summit 2012</h1>
+                <div itemprop="articleBody">
+                    
+
+<p>The opscode community summit was a two day, community organized, unconferences. It was organized like many other unconferences with no set schedule or talks, merely a bunch of people sharing the same interests and then scheduling around open spaces. This format worked really well for the size of the summit, which was around 250 people.</p>
+
+<p>The tl;dr summary was that almost every discussion eventually touched on the idea that our chef workflow is very broken. There were tons of differing opinions on testing, development, and management of modules. There is progress being made on all of them, but because there is no one recommended or set path for doing cookbook testing, the tools around them are constantly changing and getting abandoned.</p>
+
+<p>Quick summary of some of the talks I participated in:</p>
+
+<h2 id="berkshelf-jamie-of-riotgames">Berkshelf - Jamie of RiotGames</h2>
+
+<p>Berkshelf is a tool that one can use to manage dependencies in cookbooks and keep a sane record of what versions of cookbooks are running. Philosophically, each unit of your infrastructure cookbooks, such as nginx and MySQL are unimportant until packaged with your application, so why do we manage them this way?</p>
+
+<p>Chef server is merely an artifact repository for software, and each cookbook is an individual piece of software, therefore it deserves it&rsquo;s own git repo and test suite. Berkshelf can take some of the pain out of this by allowing you to specify a source and a version for each cookbook in a Berksfile, much like a Gemfile. The source can be a git repo, a filesystem, or a chef-server api endpoint.</p>
+
+<p>Jamie recommends writing cookbooks that can be used in chef solo to make manual testing significantly easier and automated testing possible. At RiotGames they use Berkshelf, minitest, and test-kitchen for cookbook testing.</p>
+
+<p>Jamie also reimplemented roles as cookbooks, because roles are dangerous and should not be used as they cannot be versioned, and that makes them useless. Use wrapper cookbooks.</p>
+
+<h2 id="instant-infrastructure-chris-of-opscode">Instant Infrastructure - Chris of Opscode</h2>
+
+<p>The idea behind instant infrastructure is two fold.</p>
+
+<p>One is to give people the tools to describe their real world problems so that things can be done about them. The tool he has chosen for this task is Gherkin.</p>
+
+<p>The other is to give non-technical people a way to deploy a sane, managed infrastructure. The plan for this is to deploy a usb stick that will wipe a laptop or desktop, replace it with ubuntu running a chef workstation, with some example cookbooks and the ability to create more usb keys.</p>
+
+<p>The idea of getting people to write acceptance critera using gherkin seems like a great idea. Giving non technical people the ability to describe their problems in a way that a developer can address directly is a good one.</p>
+
+<h2 id="motherbrain-orchestration-with-chef-jamie-of-riotgames">MotherBrain: Orchestration with Chef - Jamie of RiotGames</h2>
+
+<p>(coming to RiotGames (Riot Games) · GitHub soon)</p>
+
+<p>MotherBrain has yet to be released, but it&rsquo;s a tool that allows one to add layers of protection to your chef runs by interacting with the chef-server API. MotherBrain files contain logic about what services must be notified before making changes. For example, they allow the user to explain to motherbrain that before bringing up the application servers, the database server configuration must be complete.</p>
+
+<p>It also allows you to stop convergence of specific parts of your recipes while you debug or troubleshoot servers that are configured to converge via a cron job. This feature sounds incredibly useful for real life failover and redundancy orchestration.</p>
+
+<h2 id="tools-to-watch">Tools to watch:</h2>
+
+<p>Cucumber-chef 2
+Chef 11 !!! (mid nov release date, apparently will converge orders of magnitude faster)
+minitest
+test-kitchen
+rspec (library testing)
+fauxhai
+Berkshelf
+MotherBrain</p>
+
+<h2 id="cookbooks-to-look-at-for-inspiration">Cookbooks to look at for inspiration:</h2>
+
+<p>Application cookbook by opscode (how to tie a bunch of library cookbooks together properly)</p>
+
+<p>Redis by miah_ (has some tests)</p>
+
+<p>mysql by opscode (also has good minitest suite)</p>
+
+<h2 id="upcoming-books">Upcoming books:</h2>
+
+<p>Test Driven infrastructure with Chef (yes, again, written by the same guy so&hellip; buyer beware)</p>
+
+<h2 id="books-to-read-anyway">Books to read anyway:</h2>
+
+<p>The cucumber book</p>
+
+<p>Metaprogramming ruby</p>
+
+<p>I went to more talks, mostly about TDD with chef and other testing tools. If you interested in chatting about this stuff, or have any questions hit me up! We had interesting discussions about how to isolate cookbooks in your pipeline, but no real decisions were made. Many ideas, but we&rsquo;re really not there yet.</p>
+
+                </div>
+                <div class="feat share">
+                    <a href="//twitter.com/share" class="popup">
+                        <span class="icon-twitter"></span>
+                    </a>
+                </div>
+                
+                
+
+                
+                    <a rel="next" href="http://localhost/post/2012/2012-11-27-chef-testing-stratagies-compared/" id="next">
+                        <span class="nav-title nav-title-next">Older</span> &rarr;
+                    </a>
+                
+                
+                    <a rel="prev" href="http://localhost/post/2012/2012-10-01-what-are-we-doing-again/" id="prev">
+                        &larr; <span class="nav-title nav-title-prev">Newer</span>
+                    </a>
+                
+            </article>
+        </section>
+
+        <footer>
+	
+	<small>2016, matt urbanski</small>
+	
+</footer>
+    </div>
+    
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="http://localhost/js/main.js"></script>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-22586140-1', 'auto');
+ga('send', 'pageview');
+</script>
+
+
+<!-- Syntax highlighting -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</body>
+</html>

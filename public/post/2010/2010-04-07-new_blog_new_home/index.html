@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+
+
+
+ <html class="no-js"> 
+<head>
+    <title>New Blog, New Home &middot; iflowfor8hours.info</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="content-language" content="en-us" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="author" content="Matt Urbanski">
+    <meta name="description" content="devops, automation, webops and explosions.">
+    <meta name="generator" content="Hugo 0.17-DEV" />
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" type="text/css" href="http://localhost/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/styles/tomorrow.min.css" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700|Lora:400,700,400italic" rel="stylesheet" type="text/css">
+</head>
+<body>
+    
+    <div class="off-canvas">
+    <figure class="avatar">
+        <img src="http://localhost/img/avatar.jpg" title="Matt Urbanski">
+    </figure>
+    <div class="bio">
+        
+        <h1>matt urbanski</h1>
+        
+        
+        <p>Shot the horse after the door has bolted</p>
+        
+    </div>
+    <nav>
+        
+
+        <ul>
+            <li><a target="_blank" href="http://localhost/index.xml">RSS feed</a></li>
+        </ul>
+
+        
+        <h6>you can find me on the block in addition to</h6>
+        
+
+        <ul>
+        
+            <li><a target="_blank" href="mailto:matt@iflowfor8hours.info">Email</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/MattUrbanski.pdf">CV</a></li>
+        
+            <li><a target="_blank" href="//github.com/iflowfor8hours">Github</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/presentations/">Presentations and Published work</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/colophon/">Colophon and About Me</a></li>
+        
+        </ul>        
+    </nav>
+</div>
+
+    <div class="site-wrapper">
+        <header>
+	<div class="h-wrap">
+		
+		<h1 class="title"><a href="http://localhost/">iflowfor8hours.info</a></h1>
+		
+		<a class="menu-icon" title="Menu"><span class="lines"></span></a>
+	</div>
+</header>
+        
+        <section class="single-wrap">
+            <article class="single-content" itemscope itemtype="//schema.org/BlogPosting">
+                <div class="feat">
+                    <h5 class="page-date">
+                    <time datetime="" itemprop="datePublished">
+                    7. April 2010
+                    </time>
+                    </h5>
+                </div>
+                <h1 class="page-title" itemprop="name headline">New Blog, New Home</h1>
+                <div itemprop="articleBody">
+                    <p>Getting this box up and running the way I wanted it has proven to be a far more difficult task than I anticipated. All I wanted was:</p>
+
+<ul>
+<li>A VPS running ubuntu that was cheap, Europe-based, and that allowed me to pay with paypal.</li>
+<li>A blogging platform that I could update using vim, in textile, with a minimal amount of fluff (read plugins/updates/etc). I also wanted to be able to later integrate a decent gallery in the future.</li>
+<li>Some software fetish things, like a secure trac wiki and an svn server are in the works as well.</li>
+<li>A screen session running rtorrent.</li>
+<li>Some backup scripts for my email, homedir, dotfiles.</li>
+<li>Centralized bookmark management.</li>
+</ul>
+
+<p>To me, this sounded beyond simple. I had all this (minus rtorrent) and a wordpress installation in the past running on a dedicated server that was hosted at my previous job. The server was far from top end, but it was unused and worked well enough, so I had my way with it. Because I recently lost access to the data on that box temporarily, I decided it was not a bad time to start over. I assumed all I needed to do was to find equivalents, apt-get, edit some conf files and I would be on my way. I was wrong.</p>
+
+<p>I&rsquo;ve never worked with VPSs before, but assumed it would be exactly like dedicated servers. In the past I installed ubuntu from CD, configured everything the way I wanted it, and I was on my merry way. I went to lowendbox, found the cheapest vps I could in europe (hostrail), and bought a slice. With this vps, after getting it up and running, I noticed my terminal was dog slow. Using vim was painful, and at times screen refresh at a bash prompt was horrible. I played with this vps for a few days, reinstalling minimal distros, trying at various times of day and night to no avail. It never got any better. I decided to ditch hostrail. 1 week give or take wasted. My fault. Chalk it up to inexperience.</p>
+
+<p>I tried another vps provider (quickweb) and they seemed to be much better. The web interface was more pleasant, the Java terminal worked well, and they have some forwarding so if I ssh to a port and IP address I can get an actual console session, if I screw up firewall settings or something. I liked it already. The box is located in Germany, so no qualms there. I had some annoying timezone/locale/perl issues that were resolved with swift google-fu. Step one, accomplished.</p>
+
+<p>Things got hairy around the second part. I wasted an unbelievable amount of time picking a blogging platform. I&rsquo;m in the process of learning clojure, so I thought a static site generator in clojure would have been cool. I played with a few of them with varying levels of success. This was a while ago, so excuse the lack of details, but because my knowledge of clojure is not up to snuff, when I had configuration issues, or problems with java, I wasn&rsquo;t really keen to start debugging. I really just wanted to blog!</p>
+
+<p>I moved from there onto the KISS principle. Wordpress sprang to mind. It was easy before, so it must be easy now, right? Wrong. I installed it, did all the apache configs with mod_rewrite and editing the wp-config so that the static links worked, installed mysql, configured that&hellip; blah blah blah. In the end, I discovered that being a cheapskate can lead to serious problems. 256mb of ram is not enough to run a default configured LAMP stack comfortably. I considered tuning apache and mysql, but I didn&rsquo;t want to go around copy-pasting things I had no idea about. I&rsquo;ve never done any mysql tuning, and it&rsquo;s not something I&rsquo;m really intersted in. This limitation happily ruled out the heavyweight stuff that would be easy to get a proper gallery running on, like Joomla and Drupal. Next solution, back to static site generators.</p>
+
+<p>I really liked the idea of keeping everything inside of a VCS, and the VCS with the hotness is certainly git. The obvious answer? Jekyll! I got this running in the standard fashion, which is cloning TPW&rsquo;s blog and modifying it. Once I was done, the site I created wasn&rsquo;t pretty. While it&rsquo;s certainly not impossible to create nice layouts and have a good-looking site with Jekyll, I was not super keen on doing so. Also, the idea of easily adding a gallery was not preposterous, but would be no simple task either. I went back to the drawing board on Jekyll for these reasons.</p>
+
+<p>I think it&rsquo;s important to say at this point that I was definitely enjoying trying everything under the sun. I&rsquo;m almost never quick to give up, but when I&rsquo;m shopping for open source software and spoiled for choice I&rsquo;ll try things just for the sake of it. There are so many choices, and so many modifications and ideas that it&rsquo;s very easy to get ADD and just keep jumping from platform to platform. I think that most people who live/breathe/work in software will do this, then create their own,
+then find something they like.</p>
+
+<p>I decided that since I already had Wordpress configured, and I didn&rsquo;t really mind having everything in a database, I give it another spin. This time I would do nginx and php worker processes. Long story short, I was again short on resources and determined not to upgrade this VPS. 256mb used to be HUGE. I could comfortably emulate neo-geo roms on my p120 with 128mb!! WTF!? </joke></p>
+
+<p>One can imagine I was feeling a little lost at this point, so I turned where everyone does when the world is a little scary and confusing. Usenet. oops. I mean Stack Overflow. There were plenty of suggestions for static site generators, but nanoc stuck out as one that seems well documented, recenly maintained, and supported images well.</p>
+
+                </div>
+                <div class="feat share">
+                    <a href="//twitter.com/share" class="popup">
+                        <span class="icon-twitter"></span>
+                    </a>
+                </div>
+                
+                
+
+                
+                    <a rel="next" href="http://localhost/post/2010/2010-04-07-lunch_as_an_extension_of_self/" id="next">
+                        <span class="nav-title nav-title-next">Older</span> &rarr;
+                    </a>
+                
+                
+            </article>
+        </section>
+
+        <footer>
+	
+	<small>2016, matt urbanski</small>
+	
+</footer>
+    </div>
+    
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="http://localhost/js/main.js"></script>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-22586140-1', 'auto');
+ga('send', 'pageview');
+</script>
+
+
+<!-- Syntax highlighting -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</body>
+</html>

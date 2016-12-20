@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+
+
+
+ <html class="no-js"> 
+<head>
+    <title>CI with puppet, ec2, Jenkins, git-flow, Tomcat, and gitolite &middot; iflowfor8hours.info</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="content-language" content="en-us" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="author" content="Matt Urbanski">
+    <meta name="description" content="devops, automation, webops and explosions.">
+    <meta name="generator" content="Hugo 0.17-DEV" />
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" type="text/css" href="http://localhost/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/styles/tomorrow.min.css" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700|Lora:400,700,400italic" rel="stylesheet" type="text/css">
+</head>
+<body>
+    
+    <div class="off-canvas">
+    <figure class="avatar">
+        <img src="http://localhost/img/avatar.jpg" title="Matt Urbanski">
+    </figure>
+    <div class="bio">
+        
+        <h1>matt urbanski</h1>
+        
+        
+        <p>Shot the horse after the door has bolted</p>
+        
+    </div>
+    <nav>
+        
+
+        <ul>
+            <li><a target="_blank" href="http://localhost/index.xml">RSS feed</a></li>
+        </ul>
+
+        
+        <h6>you can find me on the block in addition to</h6>
+        
+
+        <ul>
+        
+            <li><a target="_blank" href="mailto:matt@iflowfor8hours.info">Email</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/MattUrbanski.pdf">CV</a></li>
+        
+            <li><a target="_blank" href="//github.com/iflowfor8hours">Github</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/presentations/">Presentations and Published work</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/colophon/">Colophon and About Me</a></li>
+        
+        </ul>        
+    </nav>
+</div>
+
+    <div class="site-wrapper">
+        <header>
+	<div class="h-wrap">
+		
+		<h1 class="title"><a href="http://localhost/">iflowfor8hours.info</a></h1>
+		
+		<a class="menu-icon" title="Menu"><span class="lines"></span></a>
+	</div>
+</header>
+        
+        <section class="single-wrap">
+            <article class="single-content" itemscope itemtype="//schema.org/BlogPosting">
+                <div class="feat">
+                    <h5 class="page-date">
+                    <time datetime="" itemprop="datePublished">
+                    23. March 2012
+                    </time>
+                    </h5>
+                </div>
+                <h1 class="page-title" itemprop="name headline">CI with puppet, ec2, Jenkins, git-flow, Tomcat, and gitolite</h1>
+                <div itemprop="articleBody">
+                    
+
+<p>These are notes I took while doing an assignment for a friend. I was on a pretty serious time constraint, so I cut some corners, which I will address at the end of the article. I&rsquo;m not advocating that this is the best way to structure a project like this, but I think it&rsquo;s pretty good given the situation.</p>
+
+<p><em>We&rsquo;re writing a tomcat app in Eclipse, on Windows boxes. As it stands, we&rsquo;re not doing any kind of automated testing, we have version control (svn) , but we&rsquo;re not particularlly attached to it, and we would like to be able to single-click deploy to a number of environments. We have a small team of developers that wear different hats, but we have dedicated QA people. Can you build us something that would make our dev and deploment process smoother?</em></p>
+
+<p>The most interesting part of this setup is the <a href="https://github.com/sitaramc/gitolite">gitolite</a> server. It&rsquo;s not using &lsquo;true&rsquo; <a href="https://github.com/nvie/gitflow">git-flow</a> because one of the stipulations was that the developers were using eclipse on windows to develop their tomcat application. This means that they can&rsquo;t use the git-flow scripts until someone writes a git flow plugin for eclipse. I may do this in the near future if this comes up often enough.</p>
+
+<p>My solution is going to look like this:
+- Puppet for installing and maintaining configuration
+- Jenkins for builds and deployment of environments
+- git for version control, the repo broken into feature develop QA release hotfix and master(prod), al-la git-flow</p>
+
+<h4 id="the-server-setup">The server setup</h4>
+
+<p>For fun, I used <a href="https://github.com/cloudsmith/geppetto">geppetto</a> to write and test my modules. I thought that I might deploy this <a href="http://blog.cloudsmith.com/?tag=stack-hammer">stackhammer</a>, but didn&rsquo;t wind up doing that in the end. Both of them are cool projects. I think for something like this, geppetto was a little overkill, but it was interesting to use a new tool regardless.</p>
+
+<p>This is only a single server, so I&rsquo;m going to do everything in puppet standalone &ldquo;mode&rdquo;. I think that this is an often overlooked and incredibly useful way to develop modules and avoid repeating mistakes one has the tendency to make with shell scripts.</p>
+
+<p>What I mean by this is that I wrote a module then wrote a test and ran <code>puppet apply --modulepath=/etc/puppet/modules/ --verbose ${modulename}/tests/init.pp</code>. Doing it this way means that if it were necessary, we could deploy these modules and configurations to many machines and have an idea about how it would work.</p>
+
+<p>First thing I did was run <code>apt-get update</code> followed by <code>apt-get upgrade</code>. Just to get a baseline of security updates and make sure the system is up to date.</p>
+
+<h4 id="puppet">Puppet</h4>
+
+<p>Nothing really special here, I just added the apt repo from puppet labs, and added their key.</p>
+
+<pre><code>echo -e &quot;deb http://apt.puppetlabs.com/ lucid main\ndeb-src http://apt.puppetlabs.com/ lucid main&quot; &gt;&gt; /etc/apt/sources.list.d/puppet.list
+apt-key adv --keyserver keyserver.ubuntu.com --recv 4BD6EC30
+</code></pre>
+
+<p>There were some dependency issues with libaugeas-ruby1.8, and I saw that it was not in the hardy repo. I added the lucid apt repo and got it from there.</p>
+
+<pre><code>echo -e &quot;deb http://us.archive.ubuntu.com/ubuntu/ lucid main restricted&quot; &gt;&gt;/etc/apt/sources.list.d/lucid.list
+echo -e &quot;deb-src http://us.archive.ubuntu.com/ubuntu/ lucid main restricted&quot; &gt;&gt;/etc/apt/sources.list.d/lucid.list
+
+apt-get update 
+apt-get -y install puppet git git-core apt curl
+</code></pre>
+
+<p>At this point. I removed the &ldquo;rogue&rdquo; repos, because I plan on administrating repositories with puppet.</p>
+
+<p>For the rest of the package management and configuration I want to automate, I&rsquo;m going to be using puppet.</p>
+
+<p>If this were a production box, I would probably create an image or snapshot from this point. I worked this exercise out using virtualbox, on my local machine so I took a snapshot.</p>
+
+<h4 id="jenkins">Jenkins</h4>
+
+<p>At work, I had just used an excellent puppet module for installing and configuring jenkins, so I hit that one up first.</p>
+
+<p>I had to make some modifications for ubuntu 8, namely including the sun jdk instead of the included openjdk. I built a little module for installing the sun jdk and jre, and then included them as requirements for jenkins.
+Jenkins also needed keys and it&rsquo;s gitconfig setup. I put those in it&rsquo;s puppet module. This is available on my github.</p>
+
+<h5 id="additional-configuration">additional configuration</h5>
+
+<ul>
+<li>Installing the git plugin (done with web interface)</li>
+<li>Building the ant file for different environments</li>
+</ul>
+
+<p>Jenkins is checking out different branches of the project and building and deploying them upon checkin. There are 4 branches in the repo and jenkins can read all of them. Jenkins checks out each branch, builds it, and then runs an ant task (qa prod dev stage). The ant tasks will compile, war, and deploy to their respective places in the tomcat server, then restart it. Each is accessible by it&rsquo;s name and environment, and wiped clean every time the jenkins runs the build.</p>
+
+<pre><code>http://hostname:8180/fightingChickenDev
+http://hostname:8180/fightingChickenQA
+http://hostname:8180/fightingChickenStage
+http://hostname:8180/fightingChickenProd
+</code></pre>
+
+<p>####Gitolite server ####
+I built a module for installing and configuring gitolite. The users still have to be managed by hand. I wound up using a package from the natty repo for this, which I installed using an apt module that I&rsquo;ve used in the past.
+The users for gitosis could be managed using puppet templates, I chose not to for the sake of saving time. In production, I would probably manage this by hand anyway, or if the team was big enough and growing, externalize this with LDAP.</p>
+
+<p>the git server is accessible via</p>
+
+<pre><code>git clone git@hostname:fightingChicken
+git clone git@hostname:gitolite-admin
+</code></pre>
+
+<h5 id="additional-configuration-1">additional configuration</h5>
+
+<p>Users are managed by adding their keys to <code>gitolite-admin/keydir</code> directory in the admin repo. The filename of the key has to match the username.
+Permissions are managed by the <code>gitolite-admin/conf/gitolite.conf</code> file. I did something interesting in the <code>gitolite.conf</code> file:</p>
+
+<p><strong>There are 4 branches in the repo, development, qa, stage, master.</strong></p>
+
+<p>#gitolite.conf
+@developers = dick tom
+@qa         = vikram
+@ops        = matt adminkey</p>
+
+<pre><code>    repo    gitolite-admin
+            RW+     =   adminkey
+            RW+     =   admin
+
+    repo    fightingChicken
+            RW+           =   adminkey
+            RW+           =   admin
+            R             =   jenkins
+            RW+   develop =   @all
+            RW+   qa$     =   @developers
+            RW+   stage$  =   @qa
+            RW+   master$ =   @ops
+</code></pre>
+
+<p>The development process would go like this:</p>
+
+<p>Developers (and everyone else) can push to dev and qa. Once the code arrives at QA, it is deployed to the qa environment. If the code is satisfactory, it can only be pushed to stage by the QA team members. If it is not, it is pushed back to the development branch for more work. QA can push to stage, where the ops team looks at it and makes sure that it will deploy without issues. Once that is verified, ops can push to the master, where it is deployed to production.</p>
+
+<p>All of the builds are automated, but in reality, I would probably make that last push a manual one, or at least on that wasn&rsquo;t on a cron job. If it were more than 2 steps, I would automate it, but I think forcing members of the ops team to actually decide to deploy the application after it is in the master repo (and tagged so we can roll back!) is OK.</p>
+
+<h4 id="post-mortem-writeup">Post Mortem writeup</h4>
+
+<h5 id="what-commands-to-execute-to-deploy-the-application">What commands to execute to deploy the application?</h5>
+
+<ul>
+<li>Clicking on the build now in jenkins will build and deploy the application. You can also do it from the command line by launching ant from the root of the application directory.
+<br /></li>
+</ul>
+
+<p>If I had more time:</p>
+
+<ul>
+<li>The ops side of my brain is screaming because this box doesn&rsquo;t exist because it&rsquo;s not monitored, and the basics (ntp, dns, ip, hostname, tomcat, etc..) are unmanaged. I could have included a bunch of modules that I use regularly, but I think that would just confuse things for this project.</li>
+<li>Redmine. Setting up redmine by hand is really easy. Doing an automated redmine deployment and integrating it with jenkins is not. I would have set it up by hand &lsquo;for show&rsquo;, but I came to the conclusion that it didn&rsquo;t make any sense to do so. I think having a ticket tracking system is essential to any good software project, and if you&rsquo;re not going to pay for JIRA (free tools only in the project description) then redmine is the way to go.</li>
+<li>I would write an egit wrapper for git-flow. git-flow makes so much sense to me, but windows users can&rsquo;t use it.</li>
+<li>My restart tomcat on every build paradigm is clumsy. I would manage each container separately so that restarts on the qa environment would not effect anyone else. Doing this would probably necessitate managing tomcat through puppet, which would be the right way of deploying this in production. As I said above, I would have built modules for all of the components of the system that required configuration. Every once in a while, a build fails because <code>/etc/init.d/tomcat</code> tomcat fails to execute. This could be fixed by siloing each environment and just reloading instead of restarting.</li>
+<li>Many people have problems with branched development because of merge hell. I&rsquo;m on the fence about this for this project. For projects with more than a few developers, or developers that change frequently, than single tree is the only way to go. For this project I wanted to explore what could be done witha a git-flow like development environment. We&rsquo;ll see how the team does with this. It&rsquo;s nice that this is flexible, and the team can change it if their needs do.
+
+<br /></li>
+</ul>
+
+<h5 id="why-were-certain-tools-selected">Why were certain tools selected:</h5>
+
+<ul>
+<li>Jenkins because I think it is the best tool for the job when it comes to continious integration. It&rsquo;s mature, stable, and easy to deploy. There are a ton of plugins, and it scales well. Authentication can be added pretty easily,</li>
+<li>Puppet because I&rsquo;m most familiar with it. I could have used any number of configuration management tools, but this is the one I know best.</li>
+<li>Git because I think it&rsquo;s the best dvcs there is. It is a pain that windows users have to use a graphical interface but I think most windows developers are used to that.</li>
+</ul>
+
+<h5 id="what-is-your-recommendation-for-future-work-if-time-allows">What is your recommendation for future work if time allows?</h5>
+
+<ul>
+<li>I would build modules for the &lsquo;moving parts&rsquo; of the server, as I mentioned above, and figure out why the application did not deploy properly.</li>
+</ul>
+
+                </div>
+                <div class="feat share">
+                    <a href="//twitter.com/share" class="popup">
+                        <span class="icon-twitter"></span>
+                    </a>
+                </div>
+                
+                
+
+                
+                    <a rel="next" href="http://localhost/post/2012/2012-04-26-leaving-atlanta-the-agile-way/" id="next">
+                        <span class="nav-title nav-title-next">Older</span> &rarr;
+                    </a>
+                
+                
+                    <a rel="prev" href="http://localhost/post/2012/2012-03-19-wasting-time-with-vimrc/" id="prev">
+                        &larr; <span class="nav-title nav-title-prev">Newer</span>
+                    </a>
+                
+            </article>
+        </section>
+
+        <footer>
+	
+	<small>2016, matt urbanski</small>
+	
+</footer>
+    </div>
+    
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="http://localhost/js/main.js"></script>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-22586140-1', 'auto');
+ga('send', 'pageview');
+</script>
+
+
+<!-- Syntax highlighting -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</body>
+</html>

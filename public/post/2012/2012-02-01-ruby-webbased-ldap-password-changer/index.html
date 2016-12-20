@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+
+
+
+ <html class="no-js"> 
+<head>
+    <title>ruby web-based LDAP password changer &middot; iflowfor8hours.info</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="content-language" content="en-us" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="author" content="Matt Urbanski">
+    <meta name="description" content="devops, automation, webops and explosions.">
+    <meta name="generator" content="Hugo 0.17-DEV" />
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" type="text/css" href="http://localhost/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/styles/tomorrow.min.css" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700|Lora:400,700,400italic" rel="stylesheet" type="text/css">
+</head>
+<body>
+    
+    <div class="off-canvas">
+    <figure class="avatar">
+        <img src="http://localhost/img/avatar.jpg" title="Matt Urbanski">
+    </figure>
+    <div class="bio">
+        
+        <h1>matt urbanski</h1>
+        
+        
+        <p>Shot the horse after the door has bolted</p>
+        
+    </div>
+    <nav>
+        
+
+        <ul>
+            <li><a target="_blank" href="http://localhost/index.xml">RSS feed</a></li>
+        </ul>
+
+        
+        <h6>you can find me on the block in addition to</h6>
+        
+
+        <ul>
+        
+            <li><a target="_blank" href="mailto:matt@iflowfor8hours.info">Email</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/MattUrbanski.pdf">CV</a></li>
+        
+            <li><a target="_blank" href="//github.com/iflowfor8hours">Github</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/presentations/">Presentations and Published work</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/colophon/">Colophon and About Me</a></li>
+        
+        </ul>        
+    </nav>
+</div>
+
+    <div class="site-wrapper">
+        <header>
+	<div class="h-wrap">
+		
+		<h1 class="title"><a href="http://localhost/">iflowfor8hours.info</a></h1>
+		
+		<a class="menu-icon" title="Menu"><span class="lines"></span></a>
+	</div>
+</header>
+        
+        <section class="single-wrap">
+            <article class="single-content" itemscope itemtype="//schema.org/BlogPosting">
+                <div class="feat">
+                    <h5 class="page-date">
+                    <time datetime="" itemprop="datePublished">
+                    1. February 2012
+                    </time>
+                    </h5>
+                </div>
+                <h1 class="page-title" itemprop="name headline">ruby web-based LDAP password changer</h1>
+                <div itemprop="articleBody">
+                    <p>(I was just turning my notes into a blog post, so if it seems weird, rambling, and contains too many shell commands, that&rsquo;s why.)</p>
+
+<p>I noticed that at my company when someone uses the change password tool in <a href="http://www.pidgin.im/">Pidgin</a>, they get an access denied, and no one can set their own passwords. Pain in the ass. Every time a user forgets, or their pidgin client somehow loses the password, they have to ask us for it, and we have to generate a password that they must remember. How frickin&rsquo; prehistoric. I set out to figure out why this was, and how to fix it.</p>
+
+<p>The fixing it part, not so much. Turns out that our chat server, <a href="http://www.igniterealtime.org/projects/openfire/">openfire</a>, treats the LDAP database as read only. I can imagine why, but that&rsquo;s pretty annoying. So there needed to be another way around this. I figured, why not use this as an opportunity to learn some new things! I banged out a password changer in python in about 20 minutes. It worked, but I wanted to see how I could do this in ruby. Turns out the whole <em>batteries included</em> bragging rights of the python community really means something. I&rsquo;m not blaming anyone, I&rsquo;m merely illustrating that getting something up and running from zero in ruby on Debian Lenny is not as easy as you would hope.</p>
+
+<p>Here&rsquo;s what I spent the first hour or so doing with ruby:</p>
+
+<p>No ruby, installed. I&rsquo;ll take care of that!</p>
+
+<pre><code>apt-get install ruby
+ruby --version
+</code></pre>
+
+<p>worked!</p>
+
+<pre><code>gem install sinatra
+</code></pre>
+
+<p>doh. no gem.
+I&rsquo;ll just install that right quick&hellip;</p>
+
+<pre><code>apt-get install libgemplugin-ruby
+gem install sinatra
+</code></pre>
+
+<p>Nice, it worked.
+Now I need a ruby ldap module. That should be a solved problem a million times over. This one looked stable enough to me, and coincidentally was the first result on google for ruby ldap.</p>
+
+<pre><code>git clone https://github.com/alexey-chebotar/ruby-ldap.git
+</code></pre>
+
+<p>Oh, no git.</p>
+
+<pre><code>apt-get install git
+</code></pre>
+
+<p>Hmmm WTF is gnuit? Ah, it&rsquo;s like Norton Commander, an OFM! Awesome! I love those. Except, it&rsquo;s not the git I know, love, and need. Screw it, I&rsquo;ll skip that one. Whatever. I&rsquo;m not going to send upstream patches from this box anyway, I&rsquo;ll just get the zip</p>
+
+<pre><code>wget https://github.com/alexey-chebotar/ruby-ldap/zipball/master
+unzip master 
+</code></pre>
+
+<p>Oh, no unzip.
+ugh&hellip; this is getting old&hellip;</p>
+
+<pre><code>apt-get install unzip
+unzip master 
+cd alexey-chebotar-ruby-ldap-71302b3/
+ruby extconf.rb --with-openldap2
+</code></pre>
+
+<p>It&rsquo;s complaining about mkmf. I don&rsquo;t know what that is, but I know I need it to build this.</p>
+
+<pre><code>gem install mkmf
+gem search mkmf
+</code></pre>
+
+<p>nothing.
+Quick google around, mkmf is in ruby1.8-dev</p>
+
+<pre><code>apt-get install ruby1.8-dev
+ruby extconf.rb --with-openldap2
+cat mkmf.log 
+</code></pre>
+
+<p>ok, now we&rsquo;re missing some ldap libraries.</p>
+
+<pre><code>apt-cache search ldap | grep libraries
+apt-get install libldap-2.4-2
+sudo updatedb
+locate ldap.h
+</code></pre>
+
+<p>Still no ldap.h, guess I&rsquo;ll google around for that one too.</p>
+
+<pre><code>apt-get install libldap2-dev
+ruby extconf.rb --with-openldap2
+</code></pre>
+
+<p>nice! now just to compile&hellip;</p>
+
+<pre><code>saslconn.c:19:23: error: sasl/sasl.h: No such file or directory
+</code></pre>
+
+<p>ok, need that one too.</p>
+
+<pre><code>locate sasl.h
+</code></pre>
+
+<p>nothing&hellip; back to google.</p>
+
+<pre><code>apt-get install  libsasl2-dev
+updatedb
+locate sasl.h
+make clean
+make 
+make install
+</code></pre>
+
+<p>Great. I got it up and running. Now after playing around with it, I get my first connection object working and then&hellip; hit a wall. I pass it my credentials and I get a protocol error. Weird. I change the order, even though it looks right, then decide to do the right thing. Turn on maximum logging, and try again. My log says:</p>
+
+<pre><code>Jan 26 17:58:40 v2 slapd[17786]: send_ldap_result: err=2 matched=&quot;&quot; text=&quot;historical protocol version requested, use LDAPv3 instead&quot; 
+Jan 26 17:58:40 v2 slapd[17786]: send_ldap_response: msgid=4 tag=97 err=2 
+</code></pre>
+
+<p>So this is where my knowledge ends. I google around again for answers about if ruby-ldap works with LDAPv3, and if so, how. I wind up reading the source. Ruby does generate some awesome docs.</p>
+
+<pre><code>LDAP::Conn.set_option(LDAP::LDAP_OPT_PROTOCOL_VERSION, 3 )
+</code></pre>
+
+<p>Fine, it does, awesome. Now to mess around in irb until I get it right.
+After about 45 minutes of typing and getting things wrong, I had my command line password changer for LDAP.</p>
+
+<pre><code>#/usr/bin/ruby -w
+
+#arguments UserName CurrentPassword NewPassword 
+username        = ARGV[0].to_s
+currentpassword = ARGV[1].to_s
+newpassword     = ARGV[2].to_s
+
+if ARGV.length &lt; 1
+  puts &quot;clichangepass.rb UserName CurrentPassword NewPassword&quot;
+  exit
+end
+
+require 'ldap'
+
+$HOST =    'localhost'
+$PORT =    LDAP::LDAP_PORT
+
+LDAP::Conn.set_option(LDAP::LDAP_OPT_PROTOCOL_VERSION, 3 )
+
+
+def changepass(username, currentpassword, newpassword)
+  conn = LDAP::Conn.new($HOST, $PORT)
+  conn.bind(&quot;uid=#{username}, ou=people, dc=test, dc=com&quot;,&quot;#{currentpassword}&quot;)
+  changepw=[LDAP::Mod.new(LDAP::LDAP_MOD_REPLACE, 'userPassword', [&quot;#{newpassword}&quot;]),]
+  begin
+    conn.modify(&quot;uid=#{username}, ou=people, dc=test, dc=com&quot;, changepw)
+  rescue LDAP::ResultError
+    conn.perror(&quot;modify&quot;)
+    exit
+  conn.unbind
+  end
+end
+
+puts &quot;#{username}&quot;
+puts &quot;#{currentpassword}&quot;
+puts &quot;#{newpassword}&quot;
+
+changepass(&quot;#{username}&quot;, &quot;#{currentpassword}&quot;, &quot;#{newpassword}&quot;)
+</code></pre>
+
+<p>Supposedly that was the hard part. Getting a ruby application to go from the command line to a web application is supposed to be CAKE from what I&rsquo;ve heard. I had my doubts. I looked into rails for this, but didn&rsquo;t really want to get all that involved. I don&rsquo;t intend on doing anything other than submitting a form with this app, so rails is overkill. Sinatra seemed like the natural choice.
+I installed it and got to messing with it. Seemed really really easy at first. Got the hello world up in a matter of seconds. Got my /form route done even faster. In all the tutorials, it looks like we&rsquo;re using erb, which I know rubyists despise in favor of any other templating engine, so I skipped it entirely and went with haml.</p>
+
+<p>HAML was a really nice surprise. Concise, easy, to the point. I was trying to do some not-so-fancy stuff with inheritance and couldn&rsquo;t figure that out immediately, but getting the application working is my first priority, and I&rsquo;ll worry about how to make the code look good later.</p>
+
+<p>The script itself looks alot like the one above. I just changed the names of the username currentpassword and newpassword variables and was on my way. The sinatra side of things is below.</p>
+
+<pre><code>require 'rubygems'
+require 'sinatra'
+require 'changepass'
+
+get '/form' do
+  username        = params[:username]
+  currentPassword = params[:currentPassword]
+  newPassword     = params[:newPassword]
+  haml :form
+end
+
+post '/form' do
+  changepass(&quot;#{params[:username]}&quot;, &quot;#{params[:currentPassword]}&quot;, &quot;#{params[:newPassword]}&quot;)
+end
+</code></pre>
+
+<p>I have the application working now, and have to worry about deploying it now. It&rsquo;s just a few lines of ruby, and I would like to run it from sinatra and WebBRICK, but I know that&rsquo;s really not the right thing to do if the server is already running an apache instance, which is was.</p>
+
+<p>I jumped through all the (admittely easy) hoops of installing installing passenger and getting it up and running. The thing that screwed me up was that I didn&rsquo;t know that you had to have an empty directory named /public under the application root. That piece of information was integral, and really frustrating. It actually was the most time consuming part of this whole project. After I installed and got passenger running, I debugged this issue for about 2 hours. I know, what a waste, I should have just known I needed it. Oh well. Now I know. Woot.</p>
+
+<p>I learned quite a bit, and am looking forward to coding in ruby more often, as I plan on building some web apps in the very near future.</p>
+
+                </div>
+                <div class="feat share">
+                    <a href="//twitter.com/share" class="popup">
+                        <span class="icon-twitter"></span>
+                    </a>
+                </div>
+                
+                
+
+                
+                    <a rel="next" href="http://localhost/post/2012/2012-02-27-design-fail-snowball/" id="next">
+                        <span class="nav-title nav-title-next">Older</span> &rarr;
+                    </a>
+                
+                
+                    <a rel="prev" href="http://localhost/post/2012/2012-01-23-book-idea/" id="prev">
+                        &larr; <span class="nav-title nav-title-prev">Newer</span>
+                    </a>
+                
+            </article>
+        </section>
+
+        <footer>
+	
+	<small>2016, matt urbanski</small>
+	
+</footer>
+    </div>
+    
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="http://localhost/js/main.js"></script>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-22586140-1', 'auto');
+ga('send', 'pageview');
+</script>
+
+
+<!-- Syntax highlighting -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+title = "iflowfor8hours.info"
+baseurl = "https://www.iflowfor8hours.info/"
+languageCode = "en-us"
+theme = "hugo-hikari-theme"
+canonifyurls = true
+
+post = "/:year/:slug"
+page = "/:slug"
+
+[params]
+  name = "Matt Urbanski"
+  description = "devops, automation, webops and explosions."
+  copyright = "2016, matt urbanski"
+
+  googleanalytics = "UA-22586140-1"
+
+  # Links to newer/older blog posts
+  newer = "Older"
+  older = "Newer"
+
+  pageNotFoundTitle = ""
+  pageNotFoundSubtitle = ""
+
+[params.offcanvas]
+  # Menu items
+  title = "matt urbanski"
+  bio = "Shot the horse after the door has bolted"
+  followme = "you can find me on the block in addition to"
+
+  [[params.offcanvas.socialnetworks]]
+    name = "Email"
+    url = "mailto:matt@iflowfor8hours.info"
+
+  [[params.offcanvas.socialnetworks]]
+    name = "CV"
+    url = "//www.iflowfor8hours.info/MattUrbanski.pdf"
+  
+  [[params.offcanvas.socialnetworks]]
+    name = "Github"
+    url = "//github.com/iflowfor8hours"
+
+  [[params.offcanvas.socialnetworks]]
+    name = "Presentations and Published work"
+    url = "//www.iflowfor8hours.info/page/presentations/"
+
+  [[params.offcanvas.socialnetworks]]
+    name = "Colophon and About Me"
+    url = "//www.iflowfor8hours.info/page/colophon/"

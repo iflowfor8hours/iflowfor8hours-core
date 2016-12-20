@@ -1,0 +1,904 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>iflowfor8hours.info</title>
+    <link>http://localhost/index.xml</link>
+    <description>Recent content on iflowfor8hours.info</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>2016, matt urbanski</copyright>
+    <lastBuildDate>Wed, 07 Dec 2016 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Migrating From a Static Ubuntu to Containerized Infrastructure</title>
+      <link>http://localhost/post/2016/2016-12-06-migrating-to-containers/</link>
+      <pubDate>Wed, 07 Dec 2016 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost/post/2016/2016-12-06-migrating-to-containers/</guid>
+      <description>&lt;p&gt;The time has come to move off my statically hosted ubuntu box on Digital Ocean and on to a more modern and containerized stack.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Why?&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;My Digital Ocean box was 32-bit Ubuntu, and I had not done much in terms of maintaining it in a while. I considered upgrading it, but the configuration was a &lt;em&gt;work of art&lt;/em&gt; and my work with CoreOS and containers in my dayjob inspired me to move to something more modern. I didn&amp;rsquo;t want to go the Ansible plus static infrastructure route, since I have been migrating clients off that for a few years now. I wanted to run a few other applications in containers as well so I thought this would be a good starting point. I have done this type of work frequently for entire enterprises, so this was the obvious choice. I&amp;rsquo;m documenting it because it was a fun exercise and others might benefit from it. Here is the existing infrastructure and pipeline:&lt;/p&gt;
+
+&lt;p&gt;Github -&amp;gt; Codeship Pipeline to hugo build, smoke test, then rsync artifacts -&amp;gt; Digital Ocean box with NGINX and Let&amp;rsquo;s Encrypt SSL&lt;/p&gt;
+
+&lt;p&gt;Simple setup. I didn&amp;rsquo;t really like the rsync in the pipeline, or NGINX being non-configuration managed, but it worked and was comfortable.&lt;/p&gt;
+
+&lt;p&gt;Here is the desired state:&lt;/p&gt;
+
+&lt;p&gt;Github push -&amp;gt; something Hugo build -&amp;gt; something Container packaging -&amp;gt; Ship to containerized host -&amp;gt; Decomission previous nginx container.&lt;/p&gt;
+
+&lt;p&gt;I also wanted to put let&amp;rsquo;s encrypt into its own container for bonus points, and so that I could run the same artifact locally and remotely.&lt;/p&gt;
+
+&lt;p&gt;I got started by doing a basic local nginx container that mounted my generated hugo source by mounting it. This is for my quick iterative development workflow.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;  #!/bin/bash
+  hugo --cleanDestinationDir --baseURL http://localhost/
+  chmod -R 777 public
+  docker stop iflowfor8hours-nginx-sidecar
+  docker rm -f iflowfor8hours-nginx-sidecar
+  docker run --name iflowfor8hours-nginx-sidecar -v &amp;quot;$PWD&amp;quot;/public:/usr/share/nginx/html -v &amp;quot;$PWD&amp;quot;/dev/nginx.conf:/etc/nginx/nginx.conf:ro -p 80:80 nginx:alpine
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;chmod -R 777&lt;/code&gt; is ugly, but I&amp;rsquo;m not concerned with anything getting broken since this is generated code and only used locally.&lt;/p&gt;
+
+&lt;p&gt;The next phase involved creating the container that I would use in production. I didn&amp;rsquo;t want to bake the let&amp;rsquo;s encrypt stuff into the container because I felt that it violated the concept of small, single purpose containers. I wrote a minimal &lt;code&gt;Dockerfile&lt;/code&gt; first and built it by hand.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;FROM nginx:alpine
+COPY public /usr/share/nginx/html
+RUN chown -R nginx:nginx /usr/share/nginx/html
+COPY dev/nginx.conf /etc/nginx/nginx.conf
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I&amp;rsquo;m using nginx:alpine because I was considering using &lt;a href=&#34;https://hyper.sh&#34;&gt;hyper.sh&lt;/a&gt; to host my containers, and still might. I wanted to keep it as small as possible since this is only going to be serving static html. This was another reason for the added complexity cost of putting let&amp;rsquo;s encrypt in another container.&lt;/p&gt;
+
+&lt;p&gt;I then wrote the script for building the content and the container. I figured I might as well do this now, as the CI system will need some kind of entrypoint. This also helped me iterate quickly on my local box.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;#!/bin/bash
+# Create a production and non-prod BASEURL environment variable in pipeline configuration
+
+if [ -z &amp;quot;${BASEURL}&amp;quot; ]; then 
+    HUGO_BASEURL=&#39;http://localhost/&#39;
+else 
+    HUGO_BASEURL=${BASEURL}
+fi
+
+env HUGO_BASEURL=${HUGO_BASEURL} hugo --cleanDestinationDir
+docker build -t iflowfor8hours:blog .
+echo docker run --name bakedblog -p 80:80 iflowfor8hours:blog
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I played with that for a bit, and everything works as expected. Now I need to get lets encrypt working. Since certs are free and I already own my domain, I can afford to have an https enabled staging environment. I now needed to decide on a docker hosting environment and platform. The easiest way to get up and running with containerized infrastructure is CoreOS, hands down. I spun up a coreos box on DO and then reconfigured my DNS to point it at.&lt;/p&gt;
+
+&lt;p&gt;The next phase will be to setup the pipeline and finally deploy my containers to the newly provisioned container host.&lt;/p&gt;
+
+&lt;p&gt;I also plan on migrating to IPv6 when the hosts are setup properly.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>The path to production and overengineering</title>
+      <link>http://localhost/post/2016/2016-05-26-pipelines-and-overengineering/</link>
+      <pubDate>Thu, 26 May 2016 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost/post/2016/2016-05-26-pipelines-and-overengineering/</guid>
+      <description>
+
+&lt;h4 id=&#34;the-path-to-production-is-beset-on-all-sides-by-the-inequity-of-the-good-intentioned-selfish-and-tyrrany-of-overengineering-ezekiel-25-17&#34;&gt;&lt;em&gt;&amp;ldquo;The path to production is beset on all sides by the inequity of the good-intentioned selfish and tyrrany of overengineering.&amp;rdquo;&lt;/em&gt; Ezekiel 25:17&lt;/h4&gt;
+
+&lt;p&gt;The core of many development organizations is a desire to innovate technologically and maintain quality. A key factor of keeping up with the cutting edge is to accelerate development and maximize the productivity of your teams, which is often wrapped in the implementation of a build and deploy pipeline.&lt;/p&gt;
+
+&lt;p&gt;Development teams need a pipeline that automatically runs tests, runs builds, maintains artifacts, configures applications, and manages deployments and promotions through their environments. These are the functional requirements of a pipeline. The acceptance criteria are that development is accelerated, and developer and operational experience of deployments are consistent and high quality. Core functionality of the pipeline is ensuring artifacts go from environment to environment reliably and repeatably so that risk is reduced. It is also a powerful tool for maintaining the discipline and health of the project when used properly.&lt;/p&gt;
+
+&lt;h3 id=&#34;scope-creep-and-value-propositions&#34;&gt;Scope creep and value propositions&lt;/h3&gt;
+
+&lt;p&gt;There are other requirements that may creep in such as tracking bugs and releases, integrating operational metrics from the application, adding business metrics around revenue or market events, and tracing quality or other characteristics from their version control system or other sources. These are &lt;em&gt;nice-to-haves&lt;/em&gt; in the first version of your pipeline and should be summarily sent to the backlog before discussions get too detailed.&lt;/p&gt;
+
+&lt;p&gt;Many companies design their pipelines around their development environment, citing specifics about their processes or technologies that require attention. These are technology-based decisions around build systems, testing frameworks, and integration with internal systems of record for releases. I caution that these are considerations for after the pipeline has proven to provide some value.&lt;/p&gt;
+
+&lt;p&gt;The value proposition of a pipeline begins to fade into the background as the technical details and toolset of the pipeline are decided upon. This is a slippery slope in any project, but especially toxic in infrastructure projects, where the customers and stakeholders of the project are often ill-defined or self-referential. By this I mean that the needs of internal customers, especially development teams are particularly difficult to extract.&lt;/p&gt;
+
+&lt;h4 id=&#34;the-ideal-pipeline-is-an-unopinionated-orchestration-of-independent-tools-workflows-and-environmental-constraints-whose-output-is-configured-running-software&#34;&gt;&lt;em&gt;The ideal pipeline is an unopinionated orchestration of independent tools, workflows, and environmental constraints whose output is configured, running software.&lt;/em&gt;&lt;/h4&gt;
+
+&lt;p&gt;The purpose of a pipeline is to continuously deliver high-quality software. As the complexity of the software or number of components increases, the CI pipeline should reduce complexity by having an established and repeatable path to production.&lt;/p&gt;
+
+&lt;h3 id=&#34;mitigating-the-risks-of-overengineering&#34;&gt;Mitigating the risks of overengineering&lt;/h3&gt;
+
+&lt;p&gt;As developers, we often strive to build the most generic and flexible system possible, to enable other developers to make responsible decisions for themselves. After all, they know their software better and are therefore poised to make the best decisions for the code. The ideal pipeline is an unopinionated orchestration of independent tools, workflows, and environmental constraints whose output is working, running software.&lt;/p&gt;
+
+&lt;p&gt;This quote by Joel Moses encapsulates the risks of overengineering very well. An interesting piece of related trivia is that the ◇ character allowed multiple statements per line of text; it was APL&amp;rsquo;s semicolon.&lt;/p&gt;
+
+&lt;h4 id=&#34;apl-is-like-a-beautiful-diamond-flawless-beautifully-symmetrical-but-you-can-t-add-anything-to-it-if-you-try-to-glue-on-another-diamond-you-don-t-get-a-bigger-diamond-lisp-is-like-a-ball-of-mud-add-more-and-it-s-still-a-ball-of-mud-it-still-looks-like-lisp&#34;&gt;&lt;em&gt;APL is like a beautiful diamond - flawless, beautifully symmetrical. But you can&amp;rsquo;t add anything to it. If you try to glue on another diamond, you don&amp;rsquo;t get a bigger diamond. Lisp is like a ball of mud. Add more and it&amp;rsquo;s still a ball of mud - it still looks like Lisp.&lt;/em&gt;&lt;/h4&gt;
+
+&lt;p&gt;As experienced DevOps practicioners and developers, this is what we want. A loosely-coupled system that provides the abstractions to do just about anything in respect to building, testing, and releasing software. Jenkins and TeamCity are CI servers, built around the concepts of projects, artifacts, workspaces, and nodes. However, this abstraction is very limited and the concepts are inherently stateful, whereas with CD tools that understand these principles, developers are freed from CI-only abstractions.&lt;/p&gt;
+
+&lt;p&gt;GoCD and concourse.ci take a higher-level conceptual view and allows users to express the complex relationships of dependent pipelines, determine the order in which artifacts must be built, and understand triggers based on their context. They use a small number of general concepts to encapsulate the intention and capture the value of the pipeline. Resources, jobs, and tasks with inputs and outputs are the primitives used to describe pipelines. This is actually far simpler and less error prone than the &lt;a href=&#34;https://larrycuban.wordpress.com/2010/06/08/the-difference-between-complicated-and-complex-matters/&#34;&gt;&lt;strong&gt;complicated&lt;/strong&gt; nature&lt;/a&gt; of plugins, frameworks, languages, and tools that a CI server has to deal with. The CD-aware toolchain expresses simple abstractions using the above concepts, pushing the complexity that CI is traditionally responsible for, to developers and users of the pipeline. This is where a strong conceptual model and framework of what your pipeline should accomplish is necessary for success.&lt;/p&gt;
+
+&lt;h3 id=&#34;migration-of-complexity&#34;&gt;Migration of Complexity&lt;/h3&gt;
+
+&lt;p&gt;It is important to note that this shift in where the complexity lies is the key consideration in different build and deployment pipeline paradigms. There is a critical designation between runtime complexity and compile-time complexity. How that is handled is paramount to a successful CD strategy.&lt;/p&gt;
+
+&lt;p&gt;The widespread use of containers and microservices has accelerated the pattern of moving compile-time complexity on to the developer and away from the operations team far past the humble beginnings of &lt;a href=&#34;http://12factor.net&#34;&gt;Heroku&amp;rsquo;s 12 factor&lt;/a&gt; app philosophy. Conversely, this pushes runtime complexity (scaling, monitoring, security, redundancy) further away from the developer and onto the operations team. Developers may see this as losing control of their applications, and in some ways it is a sacrifice of freedom for safety. The operations team now needs to have service discovery working reliably, good configuration management, and well-abstracted data layers for other applications to consume. A very high level of operational maturity is required for this to work, let alone to begin paying dividends.&lt;/p&gt;
+
+&lt;p&gt;Creating a good foundation is critical, however a balance of usefulness to developers and graceful operational orthodoxy must be struck and that balance is only known by you in your environment.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Colophon</title>
+      <link>http://localhost/page/colophon/</link>
+      <pubDate>Mon, 11 Jan 2016 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost/page/colophon/</guid>
+      <description>
+
+&lt;h1 id=&#34;about-the-author&#34;&gt;About The Author&lt;/h1&gt;
+
+&lt;p&gt;I&amp;rsquo;m matt urbanski, a former sysadmin/developer now devops/programmer (see what I did there) interested in functional programming, juggling, photography, and electronic music.&lt;/p&gt;
+
+&lt;p&gt;Professionally, I am a devops consultant with an interest in making things. I&amp;rsquo;ve worked in a few interesting places, but you can see all that on &lt;a href=&#34;https://uk.linkedin.com/in/matthewurbanski&#34;&gt;linkedin&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h1 id=&#34;about-this-site&#34;&gt;About This Site&lt;/h1&gt;
+
+&lt;p&gt;iflowfor8hours is a &lt;a href=&#34;https://github.com/spf13/hugo&#34;&gt;hugo&lt;/a&gt; based blog.
+The blog compiles into static HTML with some javascript to keep it pretty and simple. It is hosted on
+&lt;a href=&#34;http://www.digitalocean.com&#34;&gt;digital ocean&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://en.wikipedia.org/wiki/Colophon&#34;&gt;colophon??&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Presentations and Talks</title>
+      <link>http://localhost/page/presentations/</link>
+      <pubDate>Mon, 11 Jan 2016 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost/page/presentations/</guid>
+      <description>
+
+&lt;p&gt;This serves as a repository of presentations and talks I&amp;rsquo;ve given in the past at various users&amp;rsquo; groups and conferences.&lt;/p&gt;
+
+&lt;h3 id=&#34;devopsdays-nairobi-talk-https-www-youtube-com-watch-v-jclcyqgduxw&#34;&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=jClCYqgdUxw&#34;&gt;DevopsDays Nairobi talk&lt;/a&gt;&lt;/h3&gt;
+
+&lt;p&gt;On 15 March 2014, Adam Nelson of kili.io and I organized the first African DevopsDays, in Nairobi. It was great. The &lt;a href=&#34;http://devopsdays.org/events/2014-nairobi/&#34;&gt;event page is here&lt;/a&gt; and more &lt;a href=&#34;https://www.youtube.com/channel/UCQa9MtN8kjDIRoj9mJW_8sA&#34;&gt;videos on youtube&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;practical-vagrant-https-slid-es-urbanskims-scrum-gathering-vagrant&#34;&gt;&lt;a href=&#34;https://slid.es/urbanskims/scrum-gathering-vagrant&#34;&gt;Practical Vagrant&lt;/a&gt;&lt;/h3&gt;
+
+&lt;p&gt;Quick introduction to using vagrant that I gave at the 2013 South Africa Scrum Gathering. There is a &lt;a href=&#34;https://github.com/iflowfor8hours/vagrant-tutorial&#34;&gt;github repo&lt;/a&gt; for the practical part.&lt;/p&gt;
+
+&lt;h3 id=&#34;process-isolation-containers-chroots-and-virtualization-http-slid-es-urbanskims-vmprimer&#34;&gt;&lt;a href=&#34;http://slid.es/urbanskims/vmprimer&#34;&gt;Process Isolation: Containers, Chroots, and Virtualization&lt;/a&gt;&lt;/h3&gt;
+
+&lt;p&gt;Internal presentation that I gave to my coworkers about different kinds of virualization and how they work. Notes are &lt;a href=&#34;https://gist.github.com/iflowfor8hours/7300262&#34;&gt;in a gist&lt;/a&gt;, and the presentation is difficult to follow without them.&lt;/p&gt;
+
+&lt;h3 id=&#34;blazing-through-the-kitchen-an-introduction-to-opscode-chef-http-www-iflowfor8hours-info-presentations-chef-intro-chef-intro-html&#34;&gt;&lt;a href=&#34;http://www.iflowfor8hours.info/presentations/chef_intro/chef_intro.html&#34;&gt;Blazing through the Kitchen: An introduction to Opscode Chef&lt;/a&gt;&lt;/h3&gt;
+
+&lt;p&gt;A presentation with an interactive component at the end to get people familiar with Chef concepts and practices. The interactive component is &lt;a href=&#34;https://github.com/chef-tutorials/&#34;&gt;here&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;developing-chef-cookbooks-a-better-way-http-www-iflowfor8hours-info-presentations-lwrp-lwrp-slides-html&#34;&gt;&lt;a href=&#34;http://www.iflowfor8hours.info/presentations/lwrp/lwrp-slides.html&#34;&gt;Developing Chef Cookbooks a Better Way&lt;/a&gt;&lt;/h3&gt;
+
+&lt;p&gt;A presentation that was used to introduce good patterns in cookbook development using LWRPs and the wrapper library cookbook pattern.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Practical Migrants guide to moving to London</title>
+      <link>http://localhost/post/2015/2015-09-18-london-arrival-guide/</link>
+      <pubDate>Sun, 20 Sep 2015 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost/post/2015/2015-09-18-london-arrival-guide/</guid>
+      <description>
+
+&lt;p&gt;Moving to a new country can be a pain if you don&amp;rsquo;t know all the bureaucracy baked into being able to function like a native. I am mostly talking about in a practical sense, finding an apartment, using a bank card, and getting healthcare. These sorts of things and how one gets them are vastly different depending on where you are. I have done this four times in four different countries and always wished that there were a cheat sheet about the pieces of paper that I need to get and in what order I need to get them to accomplish this. I hope this document helps some folks moving to London who have been transferred by their jobs or just looking to start over.&lt;/p&gt;
+
+&lt;h2 id=&#34;the-end-result&#34;&gt;The end result&lt;/h2&gt;
+
+&lt;p&gt;Although this seems like a small list, there are a lot of steps involved in getting the following that have to be completed in a specific order.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;An apartment&lt;/li&gt;
+&lt;li&gt;Phone number and phone&lt;/li&gt;
+&lt;li&gt;Access to NHS Healthcare Services&lt;/li&gt;
+&lt;li&gt;A bank account&lt;/li&gt;
+&lt;li&gt;Necessary identification to use other services in the UK&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;assumptions&#34;&gt;Assumptions&lt;/h2&gt;
+
+&lt;p&gt;This is what I started with:
+* A job (not required, but the sequence and strategy is slightly different if you don&amp;rsquo;t have one)
+* The legal right to be in the UK (EU/UK passport or other passport with a visa)
+* Some place to sleep
+* Some place to receive mail&lt;/p&gt;
+
+&lt;h2 id=&#34;bank-account&#34;&gt;Bank Account&lt;/h2&gt;
+
+&lt;p&gt;It is nearly impossible to collect a paycheck in the UK unless you have a UK bank account. Not having money makes doing anything else pretty hard. The requirements to get a bank account in the UK are&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&amp;lsquo;Permanent&amp;rsquo; Mailing address with proof of address&lt;/li&gt;
+&lt;li&gt;Legal ID in two forms&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The normal high street banks I tried were pretty strict about what constitutes proof of address. They want a paper utility bill and the envelope it came in, with your name and address on it. In some cases they will accept a lease with a landlord, which is easier to get quicker, however if you haven&amp;rsquo;t sorted out an apartment yet there is a bit of a loophole that you can use if you have a job. I had someone at my company print out the address I was staying at, my salary level, and the address of the office in a note saying that I was resident in temporary housing until I found a place, and would be using my office address as the primary mailing address until that was possible.
+I went for a Lloyds international account for no other reasons than they were offshore, easy to move money around, and they give you three bank cards, a GBP, EUR, and a USD one.
+As for legal ID, I used an EU passport and a US driving license.&lt;/p&gt;
+
+&lt;h2 id=&#34;an-apartment&#34;&gt;An apartment&lt;/h2&gt;
+
+&lt;p&gt;Finding an apartment in London is hard. There are lots of resources on how to do this, but the normal stuff applies. Find a neighborhood you like, figure out what you can afford to pay, then apply for flats and hope for the best. The websites that I used for research and execution were &lt;a href=&#34;http://www.spareroom.co.uk/&#34;&gt;Spareroom.co.uk&lt;/a&gt; and &lt;a href=&#34;http://www.zoopla.co.uk/&#34;&gt;Zoopla&lt;/a&gt;. Craigslist is useless in the UK for finding a flat or flatshare.&lt;/p&gt;
+
+&lt;h2 id=&#34;ni-number&#34;&gt;NI Number&lt;/h2&gt;
+
+&lt;p&gt;An NI number is the UK&amp;rsquo;s identification for their public pension and insurance schemes. Getting one was fairly straightforward, but requires you to have legal proof of address (you can use the bank statement that you now have), and proof that you are legal to work here (copy of passport and visa). Annoyingly it is a phone application. You need to call 0345 600 0643 and they will send you a form in the mail that requires your signature. The whole process takes about 8 weeks to complete.&lt;/p&gt;
+
+&lt;h2 id=&#34;healthcare&#34;&gt;Healthcare&lt;/h2&gt;
+
+&lt;p&gt;This one brings the pain on. To get an NHS card, you need proof of address, NI number, valid ID, and your NI number. This needs to be done in person once you have collected all the documents together. The trickier part is that it needs to be done at an NHS healthcare centre that is near to your home, and accepting new patients. To find one, use the tool on the &lt;a href=&#34;http://www.nhs.uk/Pages/HomePage.aspx&#34;&gt;NHS website&lt;/a&gt; and enter your postcode with the &amp;ldquo;Accepting new patients&amp;rdquo; box ticked. Pick one close to where you live, and go there as early as possible with all the documents listed above. You will fill out some forms and wait a few days until it is confirmed. You can then get healthcare at that clinic.&lt;/p&gt;
+
+&lt;p&gt;I hope this helps someone get things sorted out, good luck in the UK.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Keyboards and how they work: The hardware inside your keyboard and the microcontroller</title>
+      <link>http://localhost/post/2015/2015-09-04-keyboard-microcontroller/</link>
+      <pubDate>Mon, 14 Sep 2015 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost/post/2015/2015-09-04-keyboard-microcontroller/</guid>
+      <description>
+
+&lt;p&gt;In this post I intend to explain what is going on inside your keyboard, from the switches all the way to the operating system, where the data terminates. I hope to go into some detail about how custom controllers like &lt;a href=&#34;https://geekhack.org/index.php?topic=17458.0&#34;&gt;Soarer&amp;rsquo;s convertor and controller&lt;/a&gt;, &lt;a href=&#34;https://github.com/kiibohd/controller&#34;&gt;HaaTa&amp;rsquo;s KiiboHD&lt;/a&gt; and &lt;a href=&#34;https://github.com/tmk/tmk_keyboard&#34;&gt;TMK&lt;/a&gt; (among others) work to communicate keypresses to your operating system through the USB-HID subsystem.&lt;/p&gt;
+
+&lt;h2 id=&#34;keyboard-switches&#34;&gt;Keyboard Switches&lt;/h2&gt;
+
+&lt;p&gt;Keyboard switches are a contentious and seemingly deep topic of discussion. Luckily for us, most of the contention is around preference and variations in feel. Most mechanical switches themselves work in nearly the same way. For an in-depth look at just about everything you need to know about switches, check out the excellent &lt;a href=&#34;www.keyboardco.com/blog/index.php/2012/12/an-introduction-to-cherry-mx-mechanical-switches/&#34;&gt;Introduction to Cherry MX mechanical switches&lt;/a&gt;. There are excellent animated gifs there like the one below. They explain the inner workings and physical properties of the feel of keyboard switches.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;http://localhost/Clear.gif&#34; alt=&#34;clear switch&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;That gif is an image of a Cherry MX Clear switch, and it shows what is going on inside the switch. There are only really two components in the switch that matter for the actuation. In that image, the plastic part in between the folded metal piece on the left side of the image is of the switch is the actuator. The leaf is the moving metal bit which controls the contact and continouity of the current moving through the switch.
+When the actuator drops, the leaf of the switch touches the stem momentarialy and continuity is restored. This is communicated to the controller, which decides what to do about it. In most cases it emits a KeyPress event. When your finger leaves the switch and the actuator separates the leaf again, there is a KeyRelease event. There is a good wiki post on this &lt;a href=&#34;http://deskthority.net/wiki/Switch_terminology&#34;&gt;on Deskauthority&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;There is also the outstanding post on the &lt;a href=&#34;http://www.wasdkeyboards.com/mechanical-keyboard-guide&#34;&gt;WASD website&lt;/a&gt; which explains the differences in switches, mounting, and their actuation. You should breeze through that as well.&lt;/p&gt;
+
+&lt;p&gt;What is important to understand is that the switches themselves are just that. Momentary contact switches. Their objective is to momentarily allow the flow of current through a circuit using the actuator to connect the leaf and stem. The release of the button shold break that contact.&lt;/p&gt;
+
+&lt;p&gt;This is soley talking about mechnical keyboard switches, as there are many other ways to indicate this to a circuit. The articles on the deskthority wiki on &lt;a href=&#34;http://deskthority.net/wiki/Contact_mechanism&#34;&gt;Contact Mechanisim&lt;/a&gt; and &lt;a href=&#34;http://deskthority.net/wiki/Switch_terminology&#34;&gt;Switch Terminology&lt;/a&gt; are good resources to read up on this topic.&lt;/p&gt;
+
+&lt;h2 id=&#34;internal-wiring&#34;&gt;Internal Wiring&lt;/h2&gt;
+
+&lt;p&gt;The switches in a keyboard are wired in a matrix configuration as shown below. This means in serial, one switch after the next, on the same bus as the previous. In the gif, the &amp;ldquo;A&amp;rdquo; key is pressed, as the switch is in the closed state, signaling to the microcontroller that the key has been pressed. There is a bit of knowledge one needs to have about muxing and diodes, and how they work together to fully understand how a one could have a controller with fewer pins than switches could accurately represent the states of all the switches, all the time.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;http://localhost/switchinternal.gif&#34; alt=&#34;switch matrix&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Let us have a look at our hypothetical diagram above, and pretend we have a keyboard with these four switches, [&amp;ldquo;A&amp;rdquo;, &amp;ldquo;B&amp;rdquo;, &amp;ldquo;C&amp;rdquo;, &amp;ldquo;D&amp;rdquo;]. If A, D and B are pressed at the same time, the entire circuit is complete, and despite not pressing it, the C switch goes hot. The diagram below illustrates that. The reason this happens is because the current is flowing in both directions when the circuit is complete on either side, due to the nature of it being wired in serial.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;http://localhost/everythinghot.gif&#34; alt=&#34;all switches hot ghosting effect&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The purpose of a diode is to ensure that electrical current can only flow in one direction. A diode will block the current from flowing up the unintended leg of another simultenious or near simultenious keypress, as illustrated in the circuit below.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;http://localhost/nkro.gif&#34; alt=&#34;n key rollover with diodes&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Mind you, these diagrams were made by &lt;a href=&#34;http://www.overclock.net/t/491752/official-mechanical-keyboard-guide&#34;&gt;Manyak on the overclockers.net forum&lt;/a&gt;. It is a great resource. RIP forums as the source of all the knowledge on the internet.&lt;/p&gt;
+
+&lt;h2 id=&#34;keyboard-hardware-and-internals&#34;&gt;Keyboard Hardware and Internals&lt;/h2&gt;
+
+&lt;p&gt;If the &lt;a href=&#34;http://localhost/12keykeyboard.jpg&#34;&gt;schematic&lt;/a&gt; in the previous part was not very helpful for understanding what is going on inside the keyboard, I found some excellent pictures from a custom keyboard build by a user named &lt;a href=&#34;http://deskthority.net/workshop-f7/brownfox-step-by-step-t6050.html&#34;&gt;matt3o on the deskauthority forums&lt;/a&gt;. He took a lot of excellent photos while building his brownfox keyboard.&lt;/p&gt;
+
+&lt;p&gt;First, he wired the switches in rows, using diodes.
+&lt;img src=&#34;http://localhost/rowsdetail.jpg&#34; alt=&#34;Detail of rows of switches&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;As you can see from further away, they are wired in serial and do not terminate anywhere yet.
+&lt;img src=&#34;http://localhost/rows.jpg&#34; alt=&#34;Rows fully wired&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Next, the columns were wired up, also in serial. He used insulation to keep the vertical wires from touching the exposed wiring of the diode legs. He passed the wiring underneath to keep it neat and easily debuggable if something went wrong. This mirrors the illustration above.
+&lt;img src=&#34;http://localhost/rowsandcolumnswired.jpg&#34; alt=&#34;Rows and Columns fully wired&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Lastly, he wired the individual rows and columns to to a microcontroller. In this case a Teensy 2.0, commonly used in keyboard projects because of its small size and the availability of good, open-source and battle tested firmware available for it. The high number of inputs and low power consumption are also key factors in this decision.
+&lt;img src=&#34;http://localhost/controllerfullywired.jpg&#34; alt=&#34;Controller wired up&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;the-microcontroller&#34;&gt;The microcontroller&lt;/h2&gt;
+
+&lt;p&gt;Heading back inside the keyboard, we can think about the microcontroller in 3 discrete components:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;http://localhost/switches-diagram.png&#34; alt=&#34;Switches Diagram&#34; /&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;em&gt;The scan module:&lt;/em&gt; This takes the state of the keys on the board and turns them into scancodes for the translation module to interpret. Most of the time, when customizing a keyboard in hardware, the layering and most of the configuration happens here.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;em&gt;The translation module:&lt;/em&gt; This module of code takes the scancodes and maps them to USB-HID output codes, or whatever sort of output you might want like midi or physical interfaces. USB-HID being the most likely for keyboards. This is can also be known as the macro module.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;em&gt;The output module:&lt;/em&gt; This sends signals to the device it is attached to over the protocol decided in the translation module, again most often USB, but in the cases of Soarer&amp;rsquo;s convertor, it can output many different kinds of proprietary keyboard protocols.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The image is from the great &lt;a href=&#34;https://www.massdrop.com/article/introduction-to-keyboard-programming&#34;&gt;Massdrop article&lt;/a&gt; by HaaTa (registration annoyingly required). I hope to go into a bit more detail about the specifics of how the firmware communicates with the HID subsystem, the kernel, your window manager, and eventually whatever application is using it.&lt;/p&gt;
+
+&lt;h2 id=&#34;what-is-usb-hid&#34;&gt;What is USB-HID?&lt;/h2&gt;
+
+&lt;p&gt;USB HID is the &lt;a href=&#34;https://en.wikipedia.org/wiki/USB_human_interface_device_class&#34;&gt;Human Interface Device&lt;/a&gt; standard used by USB to deal with interfaces devices.&lt;/p&gt;
+
+&lt;p&gt;The HID standard specifies a set of descriptors and protocols that the author of a device driver or any of software can choose what to do with. This gives a great level of flexibility in what HID can be used for. A simple example would be a two button mouse. Once a device negotiates with HID that it is a mouse, HID provides an interface that allows the mouse to specify a very limited number of variables as they come through the hardware to the HID. Namely the state of the two buttons, and the X and Y displacement. Driver authors and hardware manufacturers can extend this to other functionality your mouse probably has, like a scrollwheel and a third button, but HID takes care of the basic hardware to host communication.&lt;/p&gt;
+
+&lt;p&gt;This topic can be researched quite easily if you are interested by reading the &lt;a href=&#34;http://www.usb.org/developers/hidpage/&#34;&gt;standard itself&lt;/a&gt; if that kind of thing is up your alley. I found this aptly named resource to be particularly helpful, &lt;a href=&#34;http://www.usbmadesimple.co.uk/ums_5.htm&#34;&gt;USB Made Simple&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;conclusion&#34;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;Those are the essential hardware components of any keyboard. Some switches, a wiring matrix and a controller. The controller is the most interesting component by far, and I&amp;rsquo;ll dive into some of the code next time around.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Hacking the IBM 6112884 Keyboard</title>
+      <link>http://localhost/post/2015/2015-09-07-hacking-6112884/</link>
+      <pubDate>Mon, 07 Sep 2015 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost/post/2015/2015-09-07-hacking-6112884/</guid>
+      <description>
+
+&lt;p&gt;Over the weekend after some planning, I finally decided to hack up the IBM 6112884 keyboard I bought a few months ago. I intended on doing this for a while but didn&amp;rsquo;t get around to it until this past weekend.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;http://localhost/IMG_20150905_162852.jpg&#34; alt=&#34;6112884 Keyboard After mod&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Don&amp;rsquo;t use this board at work, it is LOUD, and your coworkers will kill you, or if you work in London, like I do, make them want to kill you but not tell you that..&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;The source code and a more detailed writeup of how to accomplish this is available on &lt;a href=&#34;https://github.com/iflowfor8hours/6112884-pro-micro-controller&#34;&gt;Github&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;I bought a couple of of &lt;a href=&#34;http://www.aliexpress.com/item/Free-Shipping-New-Pro-Micro-for-arduino-ATmega32U4-5V-16MHz-Module-with-2-row-pin-header/2021979132.html?ws_ab_test=201407_4,201444_5,201409_2&#34;&gt;Pro Micro&lt;/a&gt; controllers like the one pictured below because they use the same processor as the Teensy that is used in most projects.&lt;/p&gt;
+
+&lt;h2 id=&#34;why-this-keyboard&#34;&gt;Why this keyboard?&lt;/h2&gt;
+
+&lt;p&gt;I don&amp;rsquo;t speak Japanese, and I don&amp;rsquo;t really have any intention on learning it at the moment. So why this thing? To be honest, it was an impulse buy when I saw a big lot of them go on ebay for around $24 each. I bought one and then it sat in my closet for ages until this past weekend.&lt;/p&gt;
+
+&lt;p&gt;The board has a ton of buttons, a nice clunky feel, and an obsolete connector, making it essentially useless without some hacking.&lt;/p&gt;
+
+&lt;p&gt;Again, there is a full writeup on &lt;a href=&#34;https://github.com/iflowfor8hours/6112884-pro-micro-controller&#34;&gt;Github&lt;/a&gt;, so if you&amp;rsquo;re actually trying to accomplish this or something like it,  definitely check that out.&lt;/p&gt;
+
+&lt;h2 id=&#34;hacking-the-hardware&#34;&gt;Hacking the Hardware&lt;/h2&gt;
+
+&lt;p&gt;I did a mostly atrocious job of hacking this keybord right up until the very end. Desoldering the original processor was quite difficult, and took a long time because my working environment was me sitting on the floor of my room, getting frustrated with the length of the cord of my soldering iron.&lt;/p&gt;
+
+&lt;p&gt;After I got it out, I threw some temporary wires in and hooked up the Pro Micro.
+&lt;img src=&#34;http://localhost/IMG_20150903_233251.jpg&#34; alt=&#34;Hacky shitty wiring&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Once I confirmed that things were working mostly as expected, I did a slightly better job in doing the permanent installation.
+&lt;img src=&#34;http://localhost/IMG_20150905_162931.jpg&#34; alt=&#34;Better installation&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;After finishing that up, doing some testing and getting the software running, I put the clothes back on this board and started typing!
+&lt;img src=&#34;http://localhost/IMG_20150905_164212.jpg&#34; alt=&#34;Finished product!&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;notes-on-the-build&#34;&gt;Notes on the build&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;Get a good quality USB cable&lt;/strong&gt;
+I had a couple of micro usb cables laying around that straight up worked for android phones, charging things, other keyboards, etc that would not work for programming my pro micro. Believe it. It happens.&lt;/p&gt;
+
+&lt;p&gt;When I finally got to the troubleshooting phase. I used &lt;code&gt;xev&lt;/code&gt; extensively to test the keys and ensure the mapping was to my liking. I found this super handy sed command on reddit for filtering the output to get less stuff. Give it a shot if you like. &lt;code&gt;xev&lt;/code&gt; produces a ton of output otherwise.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;xev | sed -n &#39;s/^.*keycode *\([0-9]\+\).* * \([a-z,A-Z,0-9,_-]\+\)).*$/keycode \1 = \2 /p&#39;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;On mine, I had a whole row of keys that didn&amp;rsquo;t work, so I aligned the columns in the &lt;a href=&#34;https://github.com/iflowfor8hours/6112884-pro-micro-controller&#34;&gt;configuration file&lt;/a&gt; to get a better visual on what was supposed to be happening on each pin of the controller. The line below refers to what cluster of keys are connected to each pin of the pro micro. It was really helpful to line everything up so I could visually see everything while I was testing.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;sense             PD1               PD0             PD4             PC6             PD7             PE6               PB4               PB5
+# 0
+muxstrobe 0     esc             TAB             Z               S                 W               2                 UNASSIGNED  UNASSIGNED  
+muxstrobe 1     1                 Q               X             D                 E             3                   UNASSIGNED  UNASSIGNED  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Otherwise the project went relatively well and was mostly uneventful. There are some cool things I can do with this board, like figure out how to get the speaker to do something useful, utilize the volume control, or install a USB hub or something.&lt;/p&gt;
+
+&lt;h2 id=&#34;attribution&#34;&gt;Attribution&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;None of this would have been possible without Soarer and all the contribution he has made, and &lt;a href=&#34;https://geekhack.org/index.php?topic=50437.msg1193047#msg1193047&#34;&gt;this post&lt;/a&gt; in particular.&lt;/li&gt;
+&lt;li&gt;I used a really useful trick to get the pro micro into bootstrap mode that I found in &lt;a href=&#34;https://github.com/nicholaskell/Arduino_Loader&#34;&gt;this repository&lt;/a&gt;. Props the that guy.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://deskthority.net/workshop-f7/how-to-use-a-pro-micro-as-a-cheap-controller-converter-like-soarer-s-t8448.html&#34;&gt;This article&lt;/a&gt; about doing basically the same thing was helpful for all the people troubleshooting stuff in it.&lt;/li&gt;
+&lt;li&gt;The reddit &lt;a href=&#34;https://www.reddit.com/r/MechanicalKeyboards/comments/39pwlo/guidelinux_debug_your_kb_with_command_line_tools/&#34;&gt;/r/MechanicalKeyboards&lt;/a&gt; had that handy sed line for filtering &lt;code&gt;xev&lt;/code&gt; output.&lt;/li&gt;
+&lt;li&gt;As with all keyboard projects, thanks geekhack and deskauthority communities.&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Keyboards and how they work: An Introduction</title>
+      <link>http://localhost/post/2015/2015-08-27-keyboard-snobbery/</link>
+      <pubDate>Thu, 27 Aug 2015 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost/post/2015/2015-08-27-keyboard-snobbery/</guid>
+      <description>
+
+&lt;p&gt;Over the past few months, I have been exploring the interesting (and expensive) world of keyboards.
+Yes, keyboards. There are a couple of resources on the subject that I owe all this knowledge to, namely the &lt;a href=&#34;http://geekhack.org&#34;&gt;geekhack forums&lt;/a&gt;, the &lt;a href=&#34;https://github.com/tmk/tmk_keyboard&#34;&gt;TMK firmware source code&lt;/a&gt;, the &lt;a href=&#34;http://deskthority.net&#34;&gt;deskauthority forums&lt;/a&gt;, and of course lots of trial and error. The excellent &lt;a href=&#34;http://makelinux.net/kernel_map/&#34;&gt;Linux Kernel Map&lt;/a&gt; came in really handy for the software bits, and I highly recommend looking into it.&lt;/p&gt;
+
+&lt;p&gt;My path down this road came from a desire to build an &lt;a href=&#34;http://www.ergodox.org/&#34;&gt;ergodox&lt;/a&gt; keyboard when I saw one for sale on massdrop. I snatched one up, waited a couple of months, and when it arrived, busted out the soldering iron and got to work. I didn&amp;rsquo;t take any photos of the process, but there are plenty of build logs with great photos all over the internet, many of them on &lt;a href=&#34;https://www.reddit.com/r/MechanicalKeyboards/&#34;&gt;Reddit MechanicalKeyboards&lt;/a&gt;. My build was uneventful, greatly aided by a multimeter and lots of patience. My real interest started not after building and learning how to type on this, but after cracking open the TMK firmware and seeing how it all works.&lt;/p&gt;
+
+&lt;p&gt;Programming a microcontroller to do anything with a modern computer is a lot of fun, and this, and a few other projects I&amp;rsquo;ll discuss later led me down a bunch of interesting rabbit holes I had not encountered programming as a professional, ever.&lt;/p&gt;
+
+&lt;h2 id=&#34;how-does-a-keyboard-work&#34;&gt;How does a keyboard work?&lt;/h2&gt;
+
+&lt;p&gt;Some of this is cribbed from the well-written guide at &lt;a href=&#34;https://www.massdrop.com/article/introduction-to-keyboard-programming&#34;&gt;Massdrop&amp;rsquo;s Introduction to Keyboard Programming&lt;/a&gt; written by HaaTa, a huge contributor to both the aforementioned forums, and an expert in his own right. He wrote an alternative firmware for keyboards as well, called &lt;a href=&#34;https://github.com/haata/kiibohdforce&#34;&gt;Kiibohd&lt;/a&gt; that supports a variety of microcontrollers.&lt;/p&gt;
+
+&lt;p&gt;A keyboard is a matrix of switches attached to a microcontroller that polls the states of the individual switch on that and then sends the resulting keycode to a piece of software running on the controller which translates the raw keycode into one that the USB-HID standard understands.&lt;/p&gt;
+
+&lt;p&gt;To understand this more deeply we can model this on a hypothetical keyboard with 12 keys (switches).&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;http://localhost/12keykeyboard.jpg&#34; alt=&#34;12 Key Schematic&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;That graphic came from &lt;a href=&#34;http://nptel.ac.in/courses/Webcourse-contents/IISc-BANG/Microprocessors%20and%20Microcontrollers/pdf/Teacher_Slides/mod3/M3L7.pdf&#34;&gt;this PDF&lt;/a&gt;, but I don&amp;rsquo;t know much about the material it came from.&lt;/p&gt;
+
+&lt;p&gt;The microcontroller is scanning the rows and the columns on the lines that the switches are attached to, so when the corresponding row and column go low, the controller can use this to translate it into a scancode which will send the desired keypress.&lt;/p&gt;
+
+&lt;p&gt;As far as a PS/2 keyboard or terminal keybord, that is about it. In that world, this would generate an interrupt on the IRQ path, the lookup table in the OS would check the scancode against a keycode table (ASCII in linux vty) and the character would print or do whatever the intended control code was meant to do.&lt;/p&gt;
+
+&lt;p&gt;We can see this in the linux source code, in the &lt;a href=&#34;http://lxr.free-electrons.com/source/drivers/tty/vt/keyboard.c&#34;&gt;drivers/tty/vt/keyboard.c&lt;/a&gt; file. The interesting bit starts around line 154.&lt;/p&gt;
+
+&lt;p&gt;There is a decent summary of some of this information in the &lt;a href=&#34;https://en.wikipedia.org/wiki/Scancode#PC_compatibles&#34;&gt;Wikipedia entry for scancodes&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Thankfully, we don&amp;rsquo;t use PS/2 or terminal keyboards in most cases anymore. The USB-HID protocol allows for quite a bit of flexibility that would be impossible without a kernel recompile otherwise. Your keyboard is likely attached to the USB bus, even if it is on a laptop, and there are quite a few layers of abstraction between scancodes, keycodes, and your computer doing anything at all at this point.&lt;/p&gt;
+
+&lt;p&gt;We will follow up with a discussion of what happens next in a little while.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Vagrant, Jenkins, and CoreOS quickstart</title>
+      <link>http://localhost/post/2014/2014-04-20-vagrant-coreos-quickstart/</link>
+      <pubDate>Sun, 20 Apr 2014 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost/post/2014/2014-04-20-vagrant-coreos-quickstart/</guid>
+      <description>&lt;p&gt;I recently started exploring how to allow teams to self service their own infrastructure for jenkins. What I mean by this is somehow allowing them to spin up new nodes whenever they wanted to by just including some metadata about their projects, and then pushing to git and having some automation take care of the rest.&lt;/p&gt;
+
+&lt;p&gt;I don&amp;rsquo;t have a full solution worked out yet, but I used this as an excuse to play with docker and CoreOS.&lt;/p&gt;
+
+&lt;p&gt;These are just preliminary notes, I will post more on how successful I am when I get something more solid in place.&lt;/p&gt;
+
+&lt;p&gt;Check out the &lt;a href=&#34;https://github.com/iflowfor8hours/coreos-jenkins-spike&#34;&gt;repo&lt;/a&gt; for more details.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Vagrant, chef-solo, and databags learning experience</title>
+      <link>http://localhost/post/2013/2013-11-01-vagrant-and-databags-learning-experience/</link>
+      <pubDate>Fri, 01 Nov 2013 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost/post/2013/2013-11-01-vagrant-and-databags-learning-experience/</guid>
+      <description>
+
+&lt;p&gt;I&amp;rsquo;ve never had to use databags before in chef-solo, but this past week I needed to do some exploration with the &lt;a href=&#34;https://github.com/opscode-cookbooks/squid&#34;&gt;opscode squid cookbook&lt;/a&gt;. Aside from the &lt;a href=&#34;http://docs.opscode.com/essentials_data_bags.html&#34;&gt;opscode databag docs&lt;/a&gt;, I couldn&amp;rsquo;t find much good information on it, so here goes.&lt;/p&gt;
+
+&lt;h3 id=&#34;vagrant&#34;&gt;Vagrant&lt;/h3&gt;
+
+&lt;p&gt;This part is straightforward. Just add a directory where your Vagrantfile lives and then include a databags_path in your provisioning block.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;config.vm.provision :chef_solo do |chef|
+  chef.data_bags_path = &amp;quot;data_bags&amp;quot;
+
+  chef.run_list = [
+    &amp;quot;recipe[rubygems_proxy::default]&amp;quot;
+  ]
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;databag-structure&#34;&gt;Databag structure&lt;/h3&gt;
+
+&lt;p&gt;Databags must be in a directory with a name matching the databag. Each individual databag must be a json file, the only requirement being a &lt;code&gt;id&lt;/code&gt; element. The (truncated for clarity) directory structure looks like:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;.
+|-- Berksfile
+|-- cookbooks
+|   `-- squid
+|-- data_bags
+|   |-- squid_acl_actions
+|   |   `-- rubygems.json
+|   `-- squid_hosts
+|       |-- everythingelse.json
+|       `-- rubygems.json
+`-- Vagrantfile
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;databag-items&#34;&gt;Databag items&lt;/h3&gt;
+
+&lt;p&gt;Databag items themselves, as mentioned above, only need to contain an &lt;code&gt;id&lt;/code&gt; element to be considered valid.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;{                                                                                  
+  &amp;quot;type&amp;quot;: &amp;quot;dstdomain&amp;quot;, 
+  &amp;quot;id&amp;quot;: &amp;quot;everythingelse&amp;quot;,
+  &amp;quot;net&amp;quot;: [
+    &amp;quot;all&amp;quot;
+  ]
+} 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;using-databags&#34;&gt;Using Databags&lt;/h3&gt;
+
+&lt;p&gt;In the squid cookbook, databags are used to describe ACL rules and hosts which are retrieved using a library. To access  them in your recipes (or libraries or resources), use the &lt;code&gt;data_bag()&lt;/code&gt; method. In a chef server and chef client environment, you can leverage &lt;code&gt;search()&lt;/code&gt;, but this is not available in chef-solo out of the box.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;def squid_load_host_acl
+  host_acl.push [group[&#39;id&#39;],group[&#39;type&#39;],host]
+      end
+    end
+  rescue
+    Chef::Log.info &amp;quot;no &#39;squid_hosts&#39; data bag&amp;quot;
+  end
+  host_acl
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I hope this helps get started with databags, chef-solo, and vagrant.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Chef Testing Stratagies Compared</title>
+      <link>http://localhost/post/2012/2012-11-27-chef-testing-stratagies-compared/</link>
+      <pubDate>Tue, 27 Nov 2012 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost/post/2012/2012-11-27-chef-testing-stratagies-compared/</guid>
+      <description>
+
+&lt;h2 id=&#34;minitest-chefspec&#34;&gt;MiniTest/chefspec:&lt;/h2&gt;
+
+&lt;p&gt;Minitest is an integration testing tool that allows one to make assertions about the final state of the machine after the cookbook run. This requires a &amp;lsquo;clean&amp;rsquo; machine to run your cookbooks on to get accurate results.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Pros:
+The most logical way to automate tests that you would generally do manually. Gives you the freedom to refactor a cookbook or library and still confirm that it performs your intended actions.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Cons:
+Slow, you must spin up a machine using test-kitchen, vagrant, or some other virtualization technology. LXC is a great candidate for running minitests, but that is bound to a single platform.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Link:
+&lt;a href=&#34;https://github.com/calavera/minitest-chef-handler&#34;&gt;https://github.com/calavera/minitest-chef-handler&lt;/a&gt;
+&lt;a href=&#34;https://github.com/acrmp/chefspec&#34;&gt;https://github.com/acrmp/chefspec&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Pipelineable?
+Yes. This framework was designed with pipelines in mind.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;example&#34;&gt;Example&lt;/h1&gt;
+
+&lt;pre&gt;&lt;code&gt;describe &#39;mysql::server&#39; do
+  it &#39;runs as a daemon&#39; do
+    service(node[&#39;mysql&#39;][&#39;service_name&#39;]).must_be_running
+  end
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example will check if mysql is running, provided that attribute is populated.&lt;/p&gt;
+
+&lt;h2 id=&#34;cucumber-chef&#34;&gt;Cucumber Chef:&lt;/h2&gt;
+
+&lt;p&gt;Cucumber chef is an integration testing tool that uses an easy to read and write syntax to describe testing scenarios and infrastructure.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Pros:
+Allows you to use gherkin syntax to describe your infrastructure and test the outcome of your recipes. A natural choice for doing true TDD on your cookbooks.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Cons:
+Many people don&amp;rsquo;t like gherkin as it is very verbose. It makes some serious assumptions about your workflow and intentions. Not necessarily a bad thing, but it is very opinionated. By default it sets up an EC2 instance that your tests will run inside using LXC. This takes a while and requires you to be online.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Speed:
+Cucumber itself is fast enough, but this process feels like a kludge. Needing to be online and spending (marginal) amounts of money when I have a linux computer in front of me feels bizarre. I understand the cross platform reasoning behind it, but I would prefer some options.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Link:
+&lt;a href=&#34;https://github.com/Atalanta/cucumber-chef/wiki&#34;&gt;https://github.com/Atalanta/cucumber-chef/wiki&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Pipelineable?
+Not a natural fit for a pipeline due to it&amp;rsquo;s reliance on EC2, but could be done.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;example-1&#34;&gt;Example&lt;/h1&gt;
+
+&lt;pre&gt;&lt;code&gt; Scenario: Chef-Client is running as a daemon
+  When I run &amp;quot;ps aux | grep [c]hef-client&amp;quot;
+    Then I should see &amp;quot;chef-client&amp;quot; in the output
+    And I should see &amp;quot;-d&amp;quot; in the output
+    And I should see &amp;quot;-i 1800&amp;quot; in the output
+    And I should see &amp;quot;-s 20&amp;quot; in the output
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;test-kitchen&#34;&gt;Test-Kitchen:&lt;/h2&gt;
+
+&lt;p&gt;Test kitchen simply runs your cookbooks against a few clean virtualbox nodes running different versions of different operating systems. It does not run any external verification, but you can leverage minitest to accomplish this.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Pros:
+Really easy to understand the results. Great replacement for manual testing.
+Can spin up a bunch of different platforms for testing your cookbook on different operating systems.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Cons:
+Time Consuming. Needs to build a bunch of VMs using vagrant and run against it.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Link:
+&lt;a href=&#34;https://github.com/opscode/test-kitchen&#34;&gt;https://github.com/opscode/test-kitchen&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Pipelineable?
+Debatable, at great length. It can be, but the length of time it takes, and the difficulty of capturing useful output limits its effectiveness.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;chef-whyrun&#34;&gt;chef whyrun:&lt;/h2&gt;
+
+&lt;p&gt;Whyrun is a mode that in chef 10.14 or higher will give you an idea of what chef would have done on the node, had you run without it. This is similar to puppet&amp;rsquo;s dry-run mode, but has a few gotchas, such as it always assumes the positive outcome of only_if and not_if statements. It also does not cope well with interdependencies between cookbooks, as it has no way of verifying if a previous run was successful.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Pros:
+Better than nothing, good for debugging single cookbooks and recipes.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Cons:
+Very verbose output, hard to parse for correctness with anything other than trained eyeballs.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Link:
+&lt;a href=&#34;http://www.opscode.com/blog/2012/09/07/chef-10-14-0-released/&#34;&gt;http://www.opscode.com/blog/2012/09/07/chef-10-14-0-released/&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Pipelinable?
+It is, but you would need to parse and capture the output and visualize it in an information radiator, which would not be impossible. It belongs on the left-ish.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;foodcritic&#34;&gt;Foodcritic:&lt;/h2&gt;
+
+&lt;p&gt;Foodcritic is a linting tool to ensure Consistency and enforce some best practices in your cookbooks. There are two additional sets of rules that you can add to it, etsy and customink.
+This is run simply with &lt;code&gt;foodcritic -I $location_of_custom_rules $cookbook_path/$cookbook_name&lt;/code&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Pros:
+Enforces Cons:istency and a clean style for your cookbooks. Fast. Easy to use.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Cons:
+none.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Pipelineable?
+Definitely. This belongs on the far left of the pipeline, or ideally run pre-commit.&lt;/p&gt;
+
+&lt;h1 id=&#34;example-2&#34;&gt;Example:&lt;/h1&gt;
+
+&lt;pre&gt;&lt;code&gt;stillinvisible ~/Corp/CorpChef $ foodcritic -I foodcritic/* cookbooks/CorpBuildTools 
+CINK001: Missing CHANGELOG in markdown format: cookbooks/CorpBuildTools/CHANGELOG.md:1
+FC033: Missing template: cookbooks/CorpBuildTools/recipes/phantomjs.rb:13
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This output means that my CorpBuildTools cookbook violates a few rules, and FC033 would cause my cookbook to fail to converge. Absolutely valuable, time-saving output.&lt;/p&gt;
+
+&lt;h2 id=&#34;knife-cookbook-test&#34;&gt;knife cookbook test:&lt;/h2&gt;
+
+&lt;p&gt;This is merely a syntax checker. Handy, but not nearly as comprehensive as it should be. As long as your recipies parse properly, this will pass. That means that you can have something like&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;execute &amp;quot;clean yum cache&amp;quot; do
+  command &amp;quot;yum clean all&amp;quot;
+  command &amp;quot;yum install ruby&amp;quot;
+  mode &amp;quot;744&amp;quot;
+  action :nothing
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;There are two glaring mistakes in that execute statement, but &lt;code&gt;knife cookbook test&lt;/code&gt; won&amp;rsquo;t catch them, despite the fact that the cookbook won&amp;rsquo;t even compile. Don&amp;rsquo;t depend on this too heavily.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Pros:
+Will catch syntactic errors and prevent you from checking in stupid mistakes.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Cons:
+Fails to catch errors that will cause the cookbook to not compile.
+Pipelineable?: Definitely. Belongs on the WAY left side of the pipeline, or better yet, pre-commit.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;fast-and-dirty-debugging&#34;&gt;Fast and dirty debugging&lt;/h2&gt;
+
+&lt;p&gt;Iterating with chef-server is a pain if you&amp;rsquo;re pinning your cookbook versions (which you should be). A way around this is to use chef-solo where you can. I am definitely not advocating this workflow, but if you&amp;rsquo;re looking at why a machine converged a certain way, it can be helpful to try this.&lt;/p&gt;
+
+&lt;p&gt;Create a file with the following contents:&lt;/p&gt;
+
+&lt;h1 id=&#34;solo-rb&#34;&gt;solo.rb&lt;/h1&gt;
+
+&lt;pre&gt;&lt;code&gt;file_cache_path &amp;quot;/var/chef-solo&amp;quot;
+cookbook_path [&amp;quot;/var/chef/cache/cookbooks/&amp;quot;]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Create another file with whatever attributes you need to use, and a run_list:&lt;/p&gt;
+
+&lt;h1 id=&#34;solo-json&#34;&gt;solo.json&lt;/h1&gt;
+
+&lt;pre&gt;&lt;code&gt;{ 
+  &amp;quot;run_list&amp;quot;: [ 
+  &amp;quot;recipe[CorpBuildTools::buildgems]&amp;quot;
+  ] 
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Run &lt;code&gt;chef-solo -j solo.json&lt;/code&gt;. Observe the results, and make some changes. This can be useful when debugging a recipe on a disposable machine.&lt;/p&gt;
+
+&lt;h2 id=&#34;tying-it-all-togther&#34;&gt;Tying it all togther:&lt;/h2&gt;
+
+&lt;p&gt;Strainer is a tool that allows you to setup a workflow of testing tools and then run them against a cookbook while you are developing. My &lt;code&gt;Colanderfile&lt;/code&gt; looks like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;knife test: bundle exec knife cookbook test $COOKBOOK
+foodcritic: bundle exec foodcritic -I foodcritic/* cookbooks/$COOKBOOK
+chefspec: bundle exec rspec cookbooks/$COOKBOOK
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I keep it in the same directory as the cookbook&amp;rsquo;s metadata.rb. From the top level run &lt;code&gt;bundle exec strain cookbook_name&lt;/code&gt; and this will run knife test, foodcritic with any custom rules indicated by the -I flag, and then run the specs. This saves a bunch of typing, and can be automated with watchr or similar if you desire. Why-run could also be used as part of this workflow.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;stillinvisible ~/work/Corp/CorpChef $ tree cookbooks/CorpBuildTools 
+cookbooks/CorpBuildTools
+|-- attributes
+|   `-- default.rb
+|-- Colanderfile
+|-- files
+|   `-- default
+|       `-- tests
+|           `-- minitest
+|-- Gemfile
+|-- Gemfile.lock
+|-- metadata.rb
+|-- README.md
+|-- recipes
+|   |-- buildgems.rb
+|   |-- bundler.rb
+|   |-- default.rb
+|   |-- foodcritic.rb
+|   |-- git.rb
+|   |-- phantomjs.rb
+|   `-- ruby.rb
+|-- spec
+|   |-- buildgems_spec.rb
+|   |-- bundler_spec.rb
+|   |-- default_spec.rb
+|   |-- git_spec.rb
+|   `-- phantomjs_spec.rb
+|-- templates
+|   `-- default
+|       |-- CorpSoftware-phantomjs.repo.erb
+|       `-- Gemfile-build.erb
+`-- test
+`-- kitchen
+`-- Kitchenfile
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Your cookbooks will begin to look more like real software when tests are added. If you&amp;rsquo;re hosting them internally, perhaps it&amp;rsquo;s time to start treating them that way and giving each one it&amp;rsquo;s own git repo.&lt;/p&gt;
+
+&lt;h2 id=&#34;conclusion&#34;&gt;Conclusion:&lt;/h2&gt;
+
+&lt;p&gt;We&amp;rsquo;re using a combination of chefspec, minitest, foodcritic and vagrant for our pipeline. We haven&amp;rsquo;t completed it yet, but will publish details when we do. Local development is done using foodcritic, chefspec, and vagrant as well. I&amp;rsquo;m open to suggestions and would be interested in hearing what others are doing.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Pipelineable is a real word in the resource extraction business, so I thought it was ok to use here.&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Opscode Community Summit 2012</title>
+      <link>http://localhost/post/2012/2012-11-02-opscode-community-summit-2012/</link>
+      <pubDate>Fri, 02 Nov 2012 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost/post/2012/2012-11-02-opscode-community-summit-2012/</guid>
+      <description>
+
+&lt;p&gt;The opscode community summit was a two day, community organized, unconferences. It was organized like many other unconferences with no set schedule or talks, merely a bunch of people sharing the same interests and then scheduling around open spaces. This format worked really well for the size of the summit, which was around 250 people.&lt;/p&gt;
+
+&lt;p&gt;The tl;dr summary was that almost every discussion eventually touched on the idea that our chef workflow is very broken. There were tons of differing opinions on testing, development, and management of modules. There is progress being made on all of them, but because there is no one recommended or set path for doing cookbook testing, the tools around them are constantly changing and getting abandoned.&lt;/p&gt;
+
+&lt;p&gt;Quick summary of some of the talks I participated in:&lt;/p&gt;
+
+&lt;h2 id=&#34;berkshelf-jamie-of-riotgames&#34;&gt;Berkshelf - Jamie of RiotGames&lt;/h2&gt;
+
+&lt;p&gt;Berkshelf is a tool that one can use to manage dependencies in cookbooks and keep a sane record of what versions of cookbooks are running. Philosophically, each unit of your infrastructure cookbooks, such as nginx and MySQL are unimportant until packaged with your application, so why do we manage them this way?&lt;/p&gt;
+
+&lt;p&gt;Chef server is merely an artifact repository for software, and each cookbook is an individual piece of software, therefore it deserves it&amp;rsquo;s own git repo and test suite. Berkshelf can take some of the pain out of this by allowing you to specify a source and a version for each cookbook in a Berksfile, much like a Gemfile. The source can be a git repo, a filesystem, or a chef-server api endpoint.&lt;/p&gt;
+
+&lt;p&gt;Jamie recommends writing cookbooks that can be used in chef solo to make manual testing significantly easier and automated testing possible. At RiotGames they use Berkshelf, minitest, and test-kitchen for cookbook testing.&lt;/p&gt;
+
+&lt;p&gt;Jamie also reimplemented roles as cookbooks, because roles are dangerous and should not be used as they cannot be versioned, and that makes them useless. Use wrapper cookbooks.&lt;/p&gt;
+
+&lt;h2 id=&#34;instant-infrastructure-chris-of-opscode&#34;&gt;Instant Infrastructure - Chris of Opscode&lt;/h2&gt;
+
+&lt;p&gt;The idea behind instant infrastructure is two fold.&lt;/p&gt;
+
+&lt;p&gt;One is to give people the tools to describe their real world problems so that things can be done about them. The tool he has chosen for this task is Gherkin.&lt;/p&gt;
+
+&lt;p&gt;The other is to give non-technical people a way to deploy a sane, managed infrastructure. The plan for this is to deploy a usb stick that will wipe a laptop or desktop, replace it with ubuntu running a chef workstation, with some example cookbooks and the ability to create more usb keys.&lt;/p&gt;
+
+&lt;p&gt;The idea of getting people to write acceptance critera using gherkin seems like a great idea. Giving non technical people the ability to describe their problems in a way that a developer can address directly is a good one.&lt;/p&gt;
+
+&lt;h2 id=&#34;motherbrain-orchestration-with-chef-jamie-of-riotgames&#34;&gt;MotherBrain: Orchestration with Chef - Jamie of RiotGames&lt;/h2&gt;
+
+&lt;p&gt;(coming to RiotGames (Riot Games) · GitHub soon)&lt;/p&gt;
+
+&lt;p&gt;MotherBrain has yet to be released, but it&amp;rsquo;s a tool that allows one to add layers of protection to your chef runs by interacting with the chef-server API. MotherBrain files contain logic about what services must be notified before making changes. For example, they allow the user to explain to motherbrain that before bringing up the application servers, the database server configuration must be complete.&lt;/p&gt;
+
+&lt;p&gt;It also allows you to stop convergence of specific parts of your recipes while you debug or troubleshoot servers that are configured to converge via a cron job. This feature sounds incredibly useful for real life failover and redundancy orchestration.&lt;/p&gt;
+
+&lt;h2 id=&#34;tools-to-watch&#34;&gt;Tools to watch:&lt;/h2&gt;
+
+&lt;p&gt;Cucumber-chef 2
+Chef 11 !!! (mid nov release date, apparently will converge orders of magnitude faster)
+minitest
+test-kitchen
+rspec (library testing)
+fauxhai
+Berkshelf
+MotherBrain&lt;/p&gt;
+
+&lt;h2 id=&#34;cookbooks-to-look-at-for-inspiration&#34;&gt;Cookbooks to look at for inspiration:&lt;/h2&gt;
+
+&lt;p&gt;Application cookbook by opscode (how to tie a bunch of library cookbooks together properly)&lt;/p&gt;
+
+&lt;p&gt;Redis by miah_ (has some tests)&lt;/p&gt;
+
+&lt;p&gt;mysql by opscode (also has good minitest suite)&lt;/p&gt;
+
+&lt;h2 id=&#34;upcoming-books&#34;&gt;Upcoming books:&lt;/h2&gt;
+
+&lt;p&gt;Test Driven infrastructure with Chef (yes, again, written by the same guy so&amp;hellip; buyer beware)&lt;/p&gt;
+
+&lt;h2 id=&#34;books-to-read-anyway&#34;&gt;Books to read anyway:&lt;/h2&gt;
+
+&lt;p&gt;The cucumber book&lt;/p&gt;
+
+&lt;p&gt;Metaprogramming ruby&lt;/p&gt;
+
+&lt;p&gt;I went to more talks, mostly about TDD with chef and other testing tools. If you interested in chatting about this stuff, or have any questions hit me up! We had interesting discussions about how to isolate cookbooks in your pipeline, but no real decisions were made. Many ideas, but we&amp;rsquo;re really not there yet.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>What are we doing again?</title>
+      <link>http://localhost/post/2012/2012-10-01-what-are-we-doing-again/</link>
+      <pubDate>Mon, 01 Oct 2012 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost/post/2012/2012-10-01-what-are-we-doing-again/</guid>
+      <description>&lt;p&gt;Recently I&amp;rsquo;ve been reading and thinking quite a bit about what &amp;lsquo;we&amp;rsquo; as developers are really doing, or attempting to accomplish. I&amp;rsquo;m sure this has happened to tons of other people and it&amp;rsquo;s gone away or gotten worse, depending on the individual.
+I&amp;rsquo;m think I&amp;rsquo;m done trying to make money. It&amp;rsquo;s has proved to be pretty easy, and I don&amp;rsquo;t want to be wealthy, or own things I can&amp;rsquo;t afford, or go on trips that I can&amp;rsquo;t pay for. So now what?
+The solution for me is to strive for excellence in everything I do, and to attempt to help people at the same time. I think this is my future.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Project Sputnik Beta Day one</title>
+      <link>http://localhost/post/2012/2012-09-28-project-sputnik-beta-day-one/</link>
+      <pubDate>Fri, 28 Sep 2012 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost/post/2012/2012-09-28-project-sputnik-beta-day-one/</guid>
+      <description>&lt;p&gt;I&amp;rsquo;m taking part in the beta program for Dell&amp;rsquo;s &lt;a href=&#34;http://content.dell.com/us/en/enterprise/d/campaigns/sputnik&#34;&gt;project sputnik&lt;/a&gt;, and I&amp;rsquo;m going to be writing up some of my notes on what I think of the machine. This is the day one review, so more will follow.
+A little background: I&amp;rsquo;ve been a desktop/laptop linux user for about five years now, and have been administrating linux and unix servers in some capacity for the past nine. I&amp;rsquo;m coming from a &lt;a href=&#34;http://linuxmint.com/&#34;&gt;linux mint&lt;/a&gt; based &lt;a href=&#34;http://shop.lenovo.com/us/products/professional-grade/thinkpad/x-series/x220/index.html&#34;&gt;Lenovo ThinkPad x220&lt;/a&gt;. I have had exactly zero linux related woes with that box. I love ThinkPad design, and will probably continue using them for the rest of my life. Everything works as expected, it resumes and sleeps without issue, the battery life is great, and keyboard is flawless as far as I&amp;rsquo;m concerned. I&amp;rsquo;m a little biased considering I have been using ThinkPads exclusively since IBM released the &lt;a href=&#34;http://www.thinkwiki.org/wiki/Category:560&#34;&gt;ThinkPad 560&lt;/a&gt; in 1996, so keep that in mind.
+I haven&amp;rsquo;t used it much yet, so keep in mind this post will primarialy be about the hardware.
+###Hardware###
+This is a high end &lt;a href=&#34;http://www.dell.com/us/p/xps-13-l321x/pd&#34;&gt;Dell XPS 13 Ultrabook&lt;/a&gt;. To say this box is macbook air inspired is a massive understatement. It&amp;rsquo;s nearly indistinguishable from the outside. I&amp;rsquo;ve never oned or used one of those, but this looks identical. It has the apple style chicklet keyboard, the power button is in the same place, and the outside of it is completely clean, except for the dell logo in the center of the top.
+I would say it&amp;rsquo;s a pretty cool looking machine.
+###X220 vs XPS###
+Keep in mind I maxed out my x220 when I got it from the Lenovo depot.
+Intel&amp;rsquo;s ARK &lt;a href=&#34;http://ark.intel.com/compare/53464,54618&#34;&gt;Processor Comparison&lt;/a&gt; has the specs and there&amp;rsquo;s no point repeating them.
+My immediate concern is that the 1.70ghz proc (compared to the x220&amp;rsquo;s 2.80ghz) is going to be a bottleneck when I&amp;rsquo;m running a bunch of boxes in vagrant, but since I haven&amp;rsquo;t tried it yet, I can&amp;rsquo;t really comment. The client I&amp;rsquo;m working at right now requires me to use Microsoft Outlook and communicator, so I&amp;rsquo;m running a windows xp VM all day while I&amp;rsquo;m spinng up multi-vm test environments for chef development and other tasks. I&amp;rsquo;ll report back on that later.
+The lack of connectivity on the XPS is also a huge concern for me. The ThinkPad has 3 USB ports, a VGA port, a gigEthernet port and an SD card reader, all of which I use daily. I&amp;rsquo;m wondering how well I&amp;rsquo;ll cope with having to carry adaptors and a USB NIC around all the time. Probably not well. If they are marketing this to devs/devops people, I would think an ethernet port would be a priority, but I suppose everyone uses wifi at their office now. Do they?
+I&amp;rsquo;m also going to miss the ThinkPad&amp;rsquo;s dedicated volume controls and PgUp/PgDn key cluster.
+On the x220 my trackpad is disabled as I think it is infuriating when you accidentaly touch it while typing, and I&amp;rsquo;ve been unable to get the software that prevents that from happening to work properly on any platform, ever. I use a real mouse when I&amp;rsquo;m at a desk and the trackpoint when I&amp;rsquo;m not. I&amp;rsquo;m concerned about this on the XPS as I&amp;rsquo;ve seen reports of trackpad issues. I hope it&amp;rsquo;s not a productivity killer.
+The final gripe is the XPS has 4gb of ram and the ThinkPad has 8gb. Nuff&amp;rsquo; said.
+###Installation of Sputnik Software###
+I&amp;rsquo;m using my normal method for installing an os, which is download the image and use unetbootin to create a bootable USB drive and install from there. It seems to be going as planned.
+###Moving my homedir and configuration###
+Planning on just tarring up my whole homedir and scping it across. I suppose we&amp;rsquo;ll see how that goes. The only tricky things I think are going to be installing the RSA client under wine, and I remember I had to do some hackery to get my Verizon 4g device working. I wish I had documented that somewhere&amp;hellip;
+###Summary###
+I sound much like a crochety old man who dislikes change. I&amp;rsquo;m going to give this a go and see what happens. I&amp;rsquo;m now embarking on the always annoying task of getting my homedir and configurations from one machine to the other. I&amp;rsquo;ll report back after some real usage.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Leaving Atlanta The Agile Way</title>
+      <link>http://localhost/post/2012/2012-04-26-leaving-atlanta-the-agile-way/</link>
+      <pubDate>Thu, 26 Apr 2012 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost/post/2012/2012-04-26-leaving-atlanta-the-agile-way/</guid>
+      <description>&lt;p&gt;I&amp;rsquo;m leaving Atlanta after a series of bad things happened and one good one. The good one is that I was hired by ThoughtWorks to be an awesome devOps consultant. This means that I have to learn the Thoughtworks way of doing things, which means learning agile. I&amp;rsquo;ve been staffed on a couple projects already, so have been on agile teams, but not managed my own project. I have a ton to do, so I&amp;rsquo;m going to organize it using &lt;a href=&#34;http://www.pivotaltracker.com/&#34;&gt;Pivotal Tracker&lt;/a&gt; and applying agile methodologies as well as possible for a team of one. There will be solo standups at 10:10 daily, I&amp;rsquo;m going to walk the wall and talk to myself as often as needed!&lt;/p&gt;
+
+&lt;p&gt;Obviously some things I&amp;rsquo;m not going to be emulate simply because this is not a software project. I&amp;rsquo;ll try and make that clear.&lt;/p&gt;
+
+&lt;p&gt;You can &lt;a href=&#34;https://www.pivotaltracker.com/projects/536293&#34;&gt;track my progress&lt;/a&gt;, watch me shuffle cards around and see how I&amp;rsquo;m doing. I&amp;rsquo;ll be adding cards and scoring stories tonight, so it should be pretty filled out by the time you read this.&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;m also reading the &lt;a href=&#34;http://www.amazon.com/The-Thoughtworks-Anthology-Technology-Programmers/dp/193435614X&#34;&gt;PragProg Thoughtworks book&lt;/a&gt; of essays, so a ton of project management stuff is coming at me right now. I&amp;rsquo;m still forming my own ideas about how to manage this.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Fellow TWers, I wanted to use Mingle for this, but I&amp;rsquo;m working out some Licensing issues with the Studios team&lt;/em&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

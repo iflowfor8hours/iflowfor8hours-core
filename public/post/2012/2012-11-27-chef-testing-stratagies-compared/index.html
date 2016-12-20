@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+
+
+
+ <html class="no-js"> 
+<head>
+    <title>Chef Testing Stratagies Compared &middot; iflowfor8hours.info</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="content-language" content="en-us" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="author" content="Matt Urbanski">
+    <meta name="description" content="devops, automation, webops and explosions.">
+    <meta name="generator" content="Hugo 0.17-DEV" />
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" type="text/css" href="http://localhost/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/styles/tomorrow.min.css" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700|Lora:400,700,400italic" rel="stylesheet" type="text/css">
+</head>
+<body>
+    
+    <div class="off-canvas">
+    <figure class="avatar">
+        <img src="http://localhost/img/avatar.jpg" title="Matt Urbanski">
+    </figure>
+    <div class="bio">
+        
+        <h1>matt urbanski</h1>
+        
+        
+        <p>Shot the horse after the door has bolted</p>
+        
+    </div>
+    <nav>
+        
+
+        <ul>
+            <li><a target="_blank" href="http://localhost/index.xml">RSS feed</a></li>
+        </ul>
+
+        
+        <h6>you can find me on the block in addition to</h6>
+        
+
+        <ul>
+        
+            <li><a target="_blank" href="mailto:matt@iflowfor8hours.info">Email</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/MattUrbanski.pdf">CV</a></li>
+        
+            <li><a target="_blank" href="//github.com/iflowfor8hours">Github</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/presentations/">Presentations and Published work</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/colophon/">Colophon and About Me</a></li>
+        
+        </ul>        
+    </nav>
+</div>
+
+    <div class="site-wrapper">
+        <header>
+	<div class="h-wrap">
+		
+		<h1 class="title"><a href="http://localhost/">iflowfor8hours.info</a></h1>
+		
+		<a class="menu-icon" title="Menu"><span class="lines"></span></a>
+	</div>
+</header>
+        
+        <section class="single-wrap">
+            <article class="single-content" itemscope itemtype="//schema.org/BlogPosting">
+                <div class="feat">
+                    <h5 class="page-date">
+                    <time datetime="" itemprop="datePublished">
+                    27. November 2012
+                    </time>
+                    </h5>
+                </div>
+                <h1 class="page-title" itemprop="name headline">Chef Testing Stratagies Compared</h1>
+                <div itemprop="articleBody">
+                    
+
+<h2 id="minitest-chefspec">MiniTest/chefspec:</h2>
+
+<p>Minitest is an integration testing tool that allows one to make assertions about the final state of the machine after the cookbook run. This requires a &lsquo;clean&rsquo; machine to run your cookbooks on to get accurate results.</p>
+
+<ul>
+<li><p>Pros:
+The most logical way to automate tests that you would generally do manually. Gives you the freedom to refactor a cookbook or library and still confirm that it performs your intended actions.</p></li>
+
+<li><p>Cons:
+Slow, you must spin up a machine using test-kitchen, vagrant, or some other virtualization technology. LXC is a great candidate for running minitests, but that is bound to a single platform.</p></li>
+
+<li><p>Link:
+<a href="https://github.com/calavera/minitest-chef-handler">https://github.com/calavera/minitest-chef-handler</a>
+<a href="https://github.com/acrmp/chefspec">https://github.com/acrmp/chefspec</a></p></li>
+
+<li><p>Pipelineable?
+Yes. This framework was designed with pipelines in mind.</p></li>
+</ul>
+
+<h1 id="example">Example</h1>
+
+<pre><code>describe 'mysql::server' do
+  it 'runs as a daemon' do
+    service(node['mysql']['service_name']).must_be_running
+  end
+end
+</code></pre>
+
+<p>This example will check if mysql is running, provided that attribute is populated.</p>
+
+<h2 id="cucumber-chef">Cucumber Chef:</h2>
+
+<p>Cucumber chef is an integration testing tool that uses an easy to read and write syntax to describe testing scenarios and infrastructure.</p>
+
+<ul>
+<li><p>Pros:
+Allows you to use gherkin syntax to describe your infrastructure and test the outcome of your recipes. A natural choice for doing true TDD on your cookbooks.</p></li>
+
+<li><p>Cons:
+Many people don&rsquo;t like gherkin as it is very verbose. It makes some serious assumptions about your workflow and intentions. Not necessarily a bad thing, but it is very opinionated. By default it sets up an EC2 instance that your tests will run inside using LXC. This takes a while and requires you to be online.</p></li>
+
+<li><p>Speed:
+Cucumber itself is fast enough, but this process feels like a kludge. Needing to be online and spending (marginal) amounts of money when I have a linux computer in front of me feels bizarre. I understand the cross platform reasoning behind it, but I would prefer some options.</p></li>
+
+<li><p>Link:
+<a href="https://github.com/Atalanta/cucumber-chef/wiki">https://github.com/Atalanta/cucumber-chef/wiki</a></p></li>
+
+<li><p>Pipelineable?
+Not a natural fit for a pipeline due to it&rsquo;s reliance on EC2, but could be done.</p></li>
+</ul>
+
+<h1 id="example-1">Example</h1>
+
+<pre><code> Scenario: Chef-Client is running as a daemon
+  When I run &quot;ps aux | grep [c]hef-client&quot;
+    Then I should see &quot;chef-client&quot; in the output
+    And I should see &quot;-d&quot; in the output
+    And I should see &quot;-i 1800&quot; in the output
+    And I should see &quot;-s 20&quot; in the output
+</code></pre>
+
+<h2 id="test-kitchen">Test-Kitchen:</h2>
+
+<p>Test kitchen simply runs your cookbooks against a few clean virtualbox nodes running different versions of different operating systems. It does not run any external verification, but you can leverage minitest to accomplish this.</p>
+
+<ul>
+<li><p>Pros:
+Really easy to understand the results. Great replacement for manual testing.
+Can spin up a bunch of different platforms for testing your cookbook on different operating systems.</p></li>
+
+<li><p>Cons:
+Time Consuming. Needs to build a bunch of VMs using vagrant and run against it.</p></li>
+
+<li><p>Link:
+<a href="https://github.com/opscode/test-kitchen">https://github.com/opscode/test-kitchen</a></p></li>
+
+<li><p>Pipelineable?
+Debatable, at great length. It can be, but the length of time it takes, and the difficulty of capturing useful output limits its effectiveness.</p></li>
+</ul>
+
+<h2 id="chef-whyrun">chef whyrun:</h2>
+
+<p>Whyrun is a mode that in chef 10.14 or higher will give you an idea of what chef would have done on the node, had you run without it. This is similar to puppet&rsquo;s dry-run mode, but has a few gotchas, such as it always assumes the positive outcome of only_if and not_if statements. It also does not cope well with interdependencies between cookbooks, as it has no way of verifying if a previous run was successful.</p>
+
+<ul>
+<li><p>Pros:
+Better than nothing, good for debugging single cookbooks and recipes.</p></li>
+
+<li><p>Cons:
+Very verbose output, hard to parse for correctness with anything other than trained eyeballs.</p></li>
+
+<li><p>Link:
+<a href="http://www.opscode.com/blog/2012/09/07/chef-10-14-0-released/">http://www.opscode.com/blog/2012/09/07/chef-10-14-0-released/</a></p></li>
+
+<li><p>Pipelinable?
+It is, but you would need to parse and capture the output and visualize it in an information radiator, which would not be impossible. It belongs on the left-ish.</p></li>
+</ul>
+
+<h2 id="foodcritic">Foodcritic:</h2>
+
+<p>Foodcritic is a linting tool to ensure Consistency and enforce some best practices in your cookbooks. There are two additional sets of rules that you can add to it, etsy and customink.
+This is run simply with <code>foodcritic -I $location_of_custom_rules $cookbook_path/$cookbook_name</code></p>
+
+<ul>
+<li><p>Pros:
+Enforces Cons:istency and a clean style for your cookbooks. Fast. Easy to use.</p></li>
+
+<li><p>Cons:
+none.</p></li>
+</ul>
+
+<p>Pipelineable?
+Definitely. This belongs on the far left of the pipeline, or ideally run pre-commit.</p>
+
+<h1 id="example-2">Example:</h1>
+
+<pre><code>stillinvisible ~/Corp/CorpChef $ foodcritic -I foodcritic/* cookbooks/CorpBuildTools 
+CINK001: Missing CHANGELOG in markdown format: cookbooks/CorpBuildTools/CHANGELOG.md:1
+FC033: Missing template: cookbooks/CorpBuildTools/recipes/phantomjs.rb:13
+</code></pre>
+
+<p>This output means that my CorpBuildTools cookbook violates a few rules, and FC033 would cause my cookbook to fail to converge. Absolutely valuable, time-saving output.</p>
+
+<h2 id="knife-cookbook-test">knife cookbook test:</h2>
+
+<p>This is merely a syntax checker. Handy, but not nearly as comprehensive as it should be. As long as your recipies parse properly, this will pass. That means that you can have something like</p>
+
+<pre><code>execute &quot;clean yum cache&quot; do
+  command &quot;yum clean all&quot;
+  command &quot;yum install ruby&quot;
+  mode &quot;744&quot;
+  action :nothing
+end
+</code></pre>
+
+<p>There are two glaring mistakes in that execute statement, but <code>knife cookbook test</code> won&rsquo;t catch them, despite the fact that the cookbook won&rsquo;t even compile. Don&rsquo;t depend on this too heavily.</p>
+
+<ul>
+<li><p>Pros:
+Will catch syntactic errors and prevent you from checking in stupid mistakes.</p></li>
+
+<li><p>Cons:
+Fails to catch errors that will cause the cookbook to not compile.
+Pipelineable?: Definitely. Belongs on the WAY left side of the pipeline, or better yet, pre-commit.</p></li>
+</ul>
+
+<h2 id="fast-and-dirty-debugging">Fast and dirty debugging</h2>
+
+<p>Iterating with chef-server is a pain if you&rsquo;re pinning your cookbook versions (which you should be). A way around this is to use chef-solo where you can. I am definitely not advocating this workflow, but if you&rsquo;re looking at why a machine converged a certain way, it can be helpful to try this.</p>
+
+<p>Create a file with the following contents:</p>
+
+<h1 id="solo-rb">solo.rb</h1>
+
+<pre><code>file_cache_path &quot;/var/chef-solo&quot;
+cookbook_path [&quot;/var/chef/cache/cookbooks/&quot;]
+</code></pre>
+
+<p>Create another file with whatever attributes you need to use, and a run_list:</p>
+
+<h1 id="solo-json">solo.json</h1>
+
+<pre><code>{ 
+  &quot;run_list&quot;: [ 
+  &quot;recipe[CorpBuildTools::buildgems]&quot;
+  ] 
+}
+</code></pre>
+
+<p>Run <code>chef-solo -j solo.json</code>. Observe the results, and make some changes. This can be useful when debugging a recipe on a disposable machine.</p>
+
+<h2 id="tying-it-all-togther">Tying it all togther:</h2>
+
+<p>Strainer is a tool that allows you to setup a workflow of testing tools and then run them against a cookbook while you are developing. My <code>Colanderfile</code> looks like this:</p>
+
+<pre><code>knife test: bundle exec knife cookbook test $COOKBOOK
+foodcritic: bundle exec foodcritic -I foodcritic/* cookbooks/$COOKBOOK
+chefspec: bundle exec rspec cookbooks/$COOKBOOK
+</code></pre>
+
+<p>I keep it in the same directory as the cookbook&rsquo;s metadata.rb. From the top level run <code>bundle exec strain cookbook_name</code> and this will run knife test, foodcritic with any custom rules indicated by the -I flag, and then run the specs. This saves a bunch of typing, and can be automated with watchr or similar if you desire. Why-run could also be used as part of this workflow.</p>
+
+<pre><code>stillinvisible ~/work/Corp/CorpChef $ tree cookbooks/CorpBuildTools 
+cookbooks/CorpBuildTools
+|-- attributes
+|   `-- default.rb
+|-- Colanderfile
+|-- files
+|   `-- default
+|       `-- tests
+|           `-- minitest
+|-- Gemfile
+|-- Gemfile.lock
+|-- metadata.rb
+|-- README.md
+|-- recipes
+|   |-- buildgems.rb
+|   |-- bundler.rb
+|   |-- default.rb
+|   |-- foodcritic.rb
+|   |-- git.rb
+|   |-- phantomjs.rb
+|   `-- ruby.rb
+|-- spec
+|   |-- buildgems_spec.rb
+|   |-- bundler_spec.rb
+|   |-- default_spec.rb
+|   |-- git_spec.rb
+|   `-- phantomjs_spec.rb
+|-- templates
+|   `-- default
+|       |-- CorpSoftware-phantomjs.repo.erb
+|       `-- Gemfile-build.erb
+`-- test
+`-- kitchen
+`-- Kitchenfile
+</code></pre>
+
+<p>Your cookbooks will begin to look more like real software when tests are added. If you&rsquo;re hosting them internally, perhaps it&rsquo;s time to start treating them that way and giving each one it&rsquo;s own git repo.</p>
+
+<h2 id="conclusion">Conclusion:</h2>
+
+<p>We&rsquo;re using a combination of chefspec, minitest, foodcritic and vagrant for our pipeline. We haven&rsquo;t completed it yet, but will publish details when we do. Local development is done using foodcritic, chefspec, and vagrant as well. I&rsquo;m open to suggestions and would be interested in hearing what others are doing.</p>
+
+<ul>
+<li>Pipelineable is a real word in the resource extraction business, so I thought it was ok to use here.</li>
+</ul>
+
+                </div>
+                <div class="feat share">
+                    <a href="//twitter.com/share" class="popup">
+                        <span class="icon-twitter"></span>
+                    </a>
+                </div>
+                
+                
+
+                
+                    <a rel="next" href="http://localhost/post/2013/2013-11-01-vagrant-and-databags-learning-experience/" id="next">
+                        <span class="nav-title nav-title-next">Older</span> &rarr;
+                    </a>
+                
+                
+                    <a rel="prev" href="http://localhost/post/2012/2012-11-02-opscode-community-summit-2012/" id="prev">
+                        &larr; <span class="nav-title nav-title-prev">Newer</span>
+                    </a>
+                
+            </article>
+        </section>
+
+        <footer>
+	
+	<small>2016, matt urbanski</small>
+	
+</footer>
+    </div>
+    
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="http://localhost/js/main.js"></script>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-22586140-1', 'auto');
+ga('send', 'pageview');
+</script>
+
+
+<!-- Syntax highlighting -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</body>
+</html>

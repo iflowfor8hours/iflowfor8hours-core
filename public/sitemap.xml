@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <url>
+    <loc>http://localhost/</loc>
+    <lastmod>2016-12-07T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2016/2016-12-06-migrating-to-containers/</loc>
+    <lastmod>2016-12-07T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2016/2016-05-26-pipelines-and-overengineering/</loc>
+    <lastmod>2016-05-26T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/page/colophon/</loc>
+    <lastmod>2016-01-11T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/page/presentations/</loc>
+    <lastmod>2016-01-11T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2015/2015-09-18-london-arrival-guide/</loc>
+    <lastmod>2015-09-20T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2015/2015-09-04-keyboard-microcontroller/</loc>
+    <lastmod>2015-09-14T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2015/2015-09-07-hacking-6112884/</loc>
+    <lastmod>2015-09-07T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2015/2015-08-27-keyboard-snobbery/</loc>
+    <lastmod>2015-08-27T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2014/2014-04-20-vagrant-coreos-quickstart/</loc>
+    <lastmod>2014-04-20T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2013/2013-11-01-vagrant-and-databags-learning-experience/</loc>
+    <lastmod>2013-11-01T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2012/2012-11-27-chef-testing-stratagies-compared/</loc>
+    <lastmod>2012-11-27T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2012/2012-11-02-opscode-community-summit-2012/</loc>
+    <lastmod>2012-11-02T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2012/2012-10-01-what-are-we-doing-again/</loc>
+    <lastmod>2012-10-01T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2012/2012-09-28-project-sputnik-beta-day-one/</loc>
+    <lastmod>2012-09-28T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2012/2012-04-26-leaving-atlanta-the-agile-way/</loc>
+    <lastmod>2012-04-26T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2012/2012-03-23-ci-with-puppet-amazon-jenkins-gitflow-and-gitolite/</loc>
+    <lastmod>2012-03-23T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2012/2012-03-19-wasting-time-with-vimrc/</loc>
+    <lastmod>2012-03-19T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2012/2012-02-27-design-fail-snowball/</loc>
+    <lastmod>2012-02-27T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2012/2012-02-01-ruby-webbased-ldap-password-changer/</loc>
+    <lastmod>2012-02-01T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2012/2012-01-23-book-idea/</loc>
+    <lastmod>2012-01-23T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2012/2012-01-03-encrypted-home-nightmare/</loc>
+    <lastmod>2012-01-03T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2011/2011-11-01-smartops-atlanta-launched/</loc>
+    <lastmod>2011-11-01T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2011/2011-10-04-adding-custom-facts-to-puppet/</loc>
+    <lastmod>2011-10-04T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2011/2011-09-26-list-all-installed-packages-on-debian/</loc>
+    <lastmod>2011-09-26T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2011/2011-09-17-home-office-transformation/</loc>
+    <lastmod>2011-09-17T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2011/2011-09-17-installing-unsigned-packages-with-puppet/</loc>
+    <lastmod>2011-09-17T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2011/2011-09-13-finishing-my-truck/</loc>
+    <lastmod>2011-09-13T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2011/2011-08-25-movedtojekyll/</loc>
+    <lastmod>2011-08-25T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2011/2011-08-25-puppet-vim-development-environment/</loc>
+    <lastmod>2011-08-25T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2011/2011-08-25-removing-unity-from-ubuntu/</loc>
+    <lastmod>2011-08-25T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2011/2011-08-25-show-your-localhost/</loc>
+    <lastmod>2011-08-25T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2010/2010-04-07-lunch_as_an_extension_of_self/</loc>
+    <lastmod>2010-04-07T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://localhost/post/2010/2010-04-07-new_blog_new_home/</loc>
+    <lastmod>2010-04-07T00:00:00+00:00</lastmod>
+  </url>
+  
+</urlset>

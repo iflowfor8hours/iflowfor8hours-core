@@ -1,0 +1,19 @@
+
+On a project level, deliver what you promised first, then worry about squeezing all that you can out of the pipeline itself. Build a solid and reliable path to as close to production you can get using a pattern that will make sense no matter what. Instead of that pattern being something complicated and specific to technologies and tools, make a simple one. The one I use is that every application will have an endpoint `appname.environment/health` that will return a 200 along with some environment configuration JSON. Take that application all the way through build, test, and deployment before you start worrying about the finer things like business metrics and congrolling your environment.
+
+![dolla dolla billz yall]
+- Kent McNeil
+
+"A blow from not so long ago."
+
+More generic methods are considered to express these relationships as systems become more complex to reason about. The culmination of this idea is in travis and codeship-style build and deployment tools, which execute whatever is in the entrypoint file and often continuously deploy the built artifacts. Systems such as this lack knowledge about anything other than the localized build. A single-paradigm web application developer's wet dream. Few of the ideal-world advantages of a pipeline are realized in this implementation, but they are all available, just a shell script or untested block of code in a YAML file away.
+
+The thought process and desire for building a PaaS often stems from the technology side of the business, looking to decrease the entropy in environments. Usually the effort to centralize configurations is driven by a desire for more flexibility, scalability, easier of administration, a migration to a public cloud platform, or a combination of those reasonable justifications. As applications become configuration-managed using chef, ansible, or puppet, and environments in consul or something similar, the amount of source code and software that the organization must wrestle with and control balloons. New terminolgy is introduced, new environments are comissioned and named, and tools take the place of manual processes, a natural separation starts to occur between people who understand the point of this, and those who see the new measures as needless and frustrating impediments to getting things done.
+
+    "How will we control the version of libraries in our build and deployment environments?"
+
+The same thinking beings to creep in, putting the cart far before the horse in terms of customer need. Although building a pipeline is almost always initially a *cost* center, that does not mean that it cannot deliver value incrementally.
+
+The idea that I come back to almost every time I think about how to balance these things is a calculus of desire, understanding, and money. The teams' desire to learn and use the tools and frameworks to make this possible, combined with their understanding of the opposite side lane's pains, backed by the neverending substrate of budgetary and business limitations. 
+
+Meanwhile, back on earth, our developer still struggles to run some new code in a prod-like environment and then dispose of that environment. The level of mental engagement and knowledge required for the tooling to get out of the way has already caused great discouragement. The object of the pipeline was to accelerate development, not to build a cathedral out of lofty concepts and generic, well-tested software.

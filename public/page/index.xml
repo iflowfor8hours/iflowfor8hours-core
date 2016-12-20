@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Page-rsses on iflowfor8hours.info</title>
+    <link>http://localhost/page/index.xml</link>
+    <description>Recent content in Page-rsses on iflowfor8hours.info</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>2016, matt urbanski</copyright>
+    <lastBuildDate>Mon, 11 Jan 2016 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost/page/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Colophon</title>
+      <link>http://localhost/page/colophon/</link>
+      <pubDate>Mon, 11 Jan 2016 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost/page/colophon/</guid>
+      <description>
+
+&lt;h1 id=&#34;about-the-author&#34;&gt;About The Author&lt;/h1&gt;
+
+&lt;p&gt;I&amp;rsquo;m matt urbanski, a former sysadmin/developer now devops/programmer (see what I did there) interested in functional programming, juggling, photography, and electronic music.&lt;/p&gt;
+
+&lt;p&gt;Professionally, I am a devops consultant with an interest in making things. I&amp;rsquo;ve worked in a few interesting places, but you can see all that on &lt;a href=&#34;https://uk.linkedin.com/in/matthewurbanski&#34;&gt;linkedin&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h1 id=&#34;about-this-site&#34;&gt;About This Site&lt;/h1&gt;
+
+&lt;p&gt;iflowfor8hours is a &lt;a href=&#34;https://github.com/spf13/hugo&#34;&gt;hugo&lt;/a&gt; based blog.
+The blog compiles into static HTML with some javascript to keep it pretty and simple. It is hosted on
+&lt;a href=&#34;http://www.digitalocean.com&#34;&gt;digital ocean&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://en.wikipedia.org/wiki/Colophon&#34;&gt;colophon??&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Presentations and Talks</title>
+      <link>http://localhost/page/presentations/</link>
+      <pubDate>Mon, 11 Jan 2016 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost/page/presentations/</guid>
+      <description>
+
+&lt;p&gt;This serves as a repository of presentations and talks I&amp;rsquo;ve given in the past at various users&amp;rsquo; groups and conferences.&lt;/p&gt;
+
+&lt;h3 id=&#34;devopsdays-nairobi-talk-https-www-youtube-com-watch-v-jclcyqgduxw&#34;&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=jClCYqgdUxw&#34;&gt;DevopsDays Nairobi talk&lt;/a&gt;&lt;/h3&gt;
+
+&lt;p&gt;On 15 March 2014, Adam Nelson of kili.io and I organized the first African DevopsDays, in Nairobi. It was great. The &lt;a href=&#34;http://devopsdays.org/events/2014-nairobi/&#34;&gt;event page is here&lt;/a&gt; and more &lt;a href=&#34;https://www.youtube.com/channel/UCQa9MtN8kjDIRoj9mJW_8sA&#34;&gt;videos on youtube&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;practical-vagrant-https-slid-es-urbanskims-scrum-gathering-vagrant&#34;&gt;&lt;a href=&#34;https://slid.es/urbanskims/scrum-gathering-vagrant&#34;&gt;Practical Vagrant&lt;/a&gt;&lt;/h3&gt;
+
+&lt;p&gt;Quick introduction to using vagrant that I gave at the 2013 South Africa Scrum Gathering. There is a &lt;a href=&#34;https://github.com/iflowfor8hours/vagrant-tutorial&#34;&gt;github repo&lt;/a&gt; for the practical part.&lt;/p&gt;
+
+&lt;h3 id=&#34;process-isolation-containers-chroots-and-virtualization-http-slid-es-urbanskims-vmprimer&#34;&gt;&lt;a href=&#34;http://slid.es/urbanskims/vmprimer&#34;&gt;Process Isolation: Containers, Chroots, and Virtualization&lt;/a&gt;&lt;/h3&gt;
+
+&lt;p&gt;Internal presentation that I gave to my coworkers about different kinds of virualization and how they work. Notes are &lt;a href=&#34;https://gist.github.com/iflowfor8hours/7300262&#34;&gt;in a gist&lt;/a&gt;, and the presentation is difficult to follow without them.&lt;/p&gt;
+
+&lt;h3 id=&#34;blazing-through-the-kitchen-an-introduction-to-opscode-chef-http-www-iflowfor8hours-info-presentations-chef-intro-chef-intro-html&#34;&gt;&lt;a href=&#34;http://www.iflowfor8hours.info/presentations/chef_intro/chef_intro.html&#34;&gt;Blazing through the Kitchen: An introduction to Opscode Chef&lt;/a&gt;&lt;/h3&gt;
+
+&lt;p&gt;A presentation with an interactive component at the end to get people familiar with Chef concepts and practices. The interactive component is &lt;a href=&#34;https://github.com/chef-tutorials/&#34;&gt;here&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;developing-chef-cookbooks-a-better-way-http-www-iflowfor8hours-info-presentations-lwrp-lwrp-slides-html&#34;&gt;&lt;a href=&#34;http://www.iflowfor8hours.info/presentations/lwrp/lwrp-slides.html&#34;&gt;Developing Chef Cookbooks a Better Way&lt;/a&gt;&lt;/h3&gt;
+
+&lt;p&gt;A presentation that was used to introduce good patterns in cookbook development using LWRPs and the wrapper library cookbook pattern.&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

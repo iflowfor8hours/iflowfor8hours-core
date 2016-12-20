@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+
+
+
+ <html class="no-js"> 
+<head>
+    <title>Encrypted Home Directory Nightmare &middot; iflowfor8hours.info</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="content-language" content="en-us" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="author" content="Matt Urbanski">
+    <meta name="description" content="devops, automation, webops and explosions.">
+    <meta name="generator" content="Hugo 0.17-DEV" />
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" type="text/css" href="http://localhost/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/styles/tomorrow.min.css" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700|Lora:400,700,400italic" rel="stylesheet" type="text/css">
+</head>
+<body>
+    
+    <div class="off-canvas">
+    <figure class="avatar">
+        <img src="http://localhost/img/avatar.jpg" title="Matt Urbanski">
+    </figure>
+    <div class="bio">
+        
+        <h1>matt urbanski</h1>
+        
+        
+        <p>Shot the horse after the door has bolted</p>
+        
+    </div>
+    <nav>
+        
+
+        <ul>
+            <li><a target="_blank" href="http://localhost/index.xml">RSS feed</a></li>
+        </ul>
+
+        
+        <h6>you can find me on the block in addition to</h6>
+        
+
+        <ul>
+        
+            <li><a target="_blank" href="mailto:matt@iflowfor8hours.info">Email</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/MattUrbanski.pdf">CV</a></li>
+        
+            <li><a target="_blank" href="//github.com/iflowfor8hours">Github</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/presentations/">Presentations and Published work</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/colophon/">Colophon and About Me</a></li>
+        
+        </ul>        
+    </nav>
+</div>
+
+    <div class="site-wrapper">
+        <header>
+	<div class="h-wrap">
+		
+		<h1 class="title"><a href="http://localhost/">iflowfor8hours.info</a></h1>
+		
+		<a class="menu-icon" title="Menu"><span class="lines"></span></a>
+	</div>
+</header>
+        
+        <section class="single-wrap">
+            <article class="single-content" itemscope itemtype="//schema.org/BlogPosting">
+                <div class="feat">
+                    <h5 class="page-date">
+                    <time datetime="" itemprop="datePublished">
+                    3. January 2012
+                    </time>
+                    </h5>
+                </div>
+                <h1 class="page-title" itemprop="name headline">Encrypted Home Directory Nightmare</h1>
+                <div itemprop="articleBody">
+                    <p>This post probably won&rsquo;t help anyone in a similar situation, but I have to vent anyway.</p>
+
+<p>I ran out of space on my / partition recently, I foolishly made it only
+10gigs, and I my /opt dir was huge. My HDD was due for replacement
+anyway, so I got an ssd, and started out by pulling the old drive and installing crunchbang linux on the new one. Everything went fine.</p>
+
+<p>My home partition on the old drive was encrypted with ecryptfs. I didn&rsquo;t
+realize at that point that <em>I didn&rsquo;t remember the password for it</em>. I never noticed because every time I logged in, everything was decrypted and it never crossed my mind. My intention was to hook both drives up to my desktop and transfer my home over.</p>
+
+<p>My desktop is a windows box, so I figured there would be some complications that I would get around using a livecd. I tried every common password I&rsquo;ve ever used, and couldn&rsquo;t get my partition decrypted. No matter I thought, I would just boot back up and transfer everything over the network. This is where things went significantly downhill.</p>
+
+<p>I tried to boot my old drive, but something had happened to grub. The kernel I normally use was gone, and there was only the liquorix 3.0.4 kernel there. I tried to boot it and failed. I was getting a kernel panic right after I selected my kernel. It couldn&rsquo;t find my disk. I googled around and found out that the error I was seeing is most commonly associated with missing sata ahci drivers. It was totally possible that they were missing, as I had never used this kernel before, and I don&rsquo;t know why it was the only one showing up.</p>
+
+<p>I panicked and immediately thought that I should throw tools at the problem. I booted with super grub disk, and ran the automated grub repair tools. I tried to boot again and only then realized that it had replaced grub2 with grub, and couldn&rsquo;t find my kernels. Ugh. I tried super grub2 disk, but unetbootin was being a bastard and wouldn&rsquo;t install it on my thumbdrive. I started getting really frustrated with the thought that my homedir was encrypted, I couldn&rsquo;t unecrypt it, and my data was gone forever.</p>
+
+<p>I banged on the problem late into the night, trying different techniques to get my grub fixed. I booted from a livecd and attempted to install a new kernel using chroot. This appeared to work, but when I rebooted, the kernel didn&rsquo;t appear.</p>
+
+<p>At that point, I realized that I didn&rsquo;t know anything about grub2. I was looking for menu.lst, trying random update-grub commands to no avail. I tried all kinds of stuff from the grub command line that didn&rsquo;t work, and just got more and more angry. I went to sleep super pissed off, sweating that about 2 weeks worth of stuff was lost. I realized that my backup policy sucked. I needed to rsync more frequently, but that wouldn&rsquo;t help me until I recovered the data.</p>
+
+<p>Today I woke up and consciously didn&rsquo;t think about it. I just got all the other things on my Saturday list of crap done first. Toilet is fixed, car is clean, house is cleaner, brisket is in the oven, and I bought booze, which in GA is important to do on Saturday, because &ldquo;package stores&rdquo; are closed by law on Sundays.</p>
+
+<p>I sat down with a calm and level head, and realized that I probably won&rsquo;t be able to guess what my password was. I set it while I was living in Spain a year ago, and was using a totally different scheme of passwords. I gave up on that. I realized that my only chance was to build a mental model of how grub2 works, and fix it.</p>
+
+<p>I started digging into the grub2 docs, and looking at the configuration files. Every time I ran grub-update, it would find the new kernel I installed but it never appeared in my grub.cfg. I started looking at the /etc/grub directory from my livecd booted machine and realized that there were plusses and minuses next my original kernel version and my newly installed generic kernel. Grub was trying to make a cute little submenu for them under the title &ldquo;previous linux versions&rdquo;, and for some reason it wasn&rsquo;t happening. I fixed the config file so there were no submenus or anything weird and ran update-grub again. My kernel appeared. Nice.</p>
+
+<p>I rebooted and my familiar desktop appeared. WOOT. My data is now rsyncing to the new drive. I have some questions about ecryptfs, and how it works, because I don&rsquo;t know where my disk is getting the decrypt key from when I login, but I&rsquo;m much less stressed and that&rsquo;s good.</p>
+
+<p>The moral of the story I think as usual, is not to try and fix things you don&rsquo;t understand when you&rsquo;re angry and frustrated. Throwing tools you don&rsquo;t understand at a problem is almost NEVER the right way to do anything.</p>
+
+                </div>
+                <div class="feat share">
+                    <a href="//twitter.com/share" class="popup">
+                        <span class="icon-twitter"></span>
+                    </a>
+                </div>
+                
+                
+
+                
+                    <a rel="next" href="http://localhost/post/2012/2012-01-23-book-idea/" id="next">
+                        <span class="nav-title nav-title-next">Older</span> &rarr;
+                    </a>
+                
+                
+                    <a rel="prev" href="http://localhost/post/2011/2011-11-01-smartops-atlanta-launched/" id="prev">
+                        &larr; <span class="nav-title nav-title-prev">Newer</span>
+                    </a>
+                
+            </article>
+        </section>
+
+        <footer>
+	
+	<small>2016, matt urbanski</small>
+	
+</footer>
+    </div>
+    
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="http://localhost/js/main.js"></script>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-22586140-1', 'auto');
+ga('send', 'pageview');
+</script>
+
+
+<!-- Syntax highlighting -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</body>
+</html>

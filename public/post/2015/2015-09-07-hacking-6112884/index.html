@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+
+
+
+ <html class="no-js"> 
+<head>
+    <title>Hacking the IBM 6112884 Keyboard &middot; iflowfor8hours.info</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="content-language" content="en-us" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="author" content="Matt Urbanski">
+    <meta name="description" content="devops, automation, webops and explosions.">
+    <meta name="generator" content="Hugo 0.17-DEV" />
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" type="text/css" href="http://localhost/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/styles/tomorrow.min.css" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700|Lora:400,700,400italic" rel="stylesheet" type="text/css">
+</head>
+<body>
+    
+    <div class="off-canvas">
+    <figure class="avatar">
+        <img src="http://localhost/img/avatar.jpg" title="Matt Urbanski">
+    </figure>
+    <div class="bio">
+        
+        <h1>matt urbanski</h1>
+        
+        
+        <p>Shot the horse after the door has bolted</p>
+        
+    </div>
+    <nav>
+        
+
+        <ul>
+            <li><a target="_blank" href="http://localhost/index.xml">RSS feed</a></li>
+        </ul>
+
+        
+        <h6>you can find me on the block in addition to</h6>
+        
+
+        <ul>
+        
+            <li><a target="_blank" href="mailto:matt@iflowfor8hours.info">Email</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/MattUrbanski.pdf">CV</a></li>
+        
+            <li><a target="_blank" href="//github.com/iflowfor8hours">Github</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/presentations/">Presentations and Published work</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/colophon/">Colophon and About Me</a></li>
+        
+        </ul>        
+    </nav>
+</div>
+
+    <div class="site-wrapper">
+        <header>
+	<div class="h-wrap">
+		
+		<h1 class="title"><a href="http://localhost/">iflowfor8hours.info</a></h1>
+		
+		<a class="menu-icon" title="Menu"><span class="lines"></span></a>
+	</div>
+</header>
+        
+        <section class="single-wrap">
+            <article class="single-content" itemscope itemtype="//schema.org/BlogPosting">
+                <div class="feat">
+                    <h5 class="page-date">
+                    <time datetime="" itemprop="datePublished">
+                    7. September 2015
+                    </time>
+                    </h5>
+                </div>
+                <h1 class="page-title" itemprop="name headline">Hacking the IBM 6112884 Keyboard</h1>
+                <div itemprop="articleBody">
+                    
+
+<p>Over the weekend after some planning, I finally decided to hack up the IBM 6112884 keyboard I bought a few months ago. I intended on doing this for a while but didn&rsquo;t get around to it until this past weekend.</p>
+
+<p><img src="http://localhost/IMG_20150905_162852.jpg" alt="6112884 Keyboard After mod" /></p>
+
+<p><strong>Don&rsquo;t use this board at work, it is LOUD, and your coworkers will kill you, or if you work in London, like I do, make them want to kill you but not tell you that..</strong></p>
+
+<p>The source code and a more detailed writeup of how to accomplish this is available on <a href="https://github.com/iflowfor8hours/6112884-pro-micro-controller">Github</a>.</p>
+
+<p>I bought a couple of of <a href="http://www.aliexpress.com/item/Free-Shipping-New-Pro-Micro-for-arduino-ATmega32U4-5V-16MHz-Module-with-2-row-pin-header/2021979132.html?ws_ab_test=201407_4,201444_5,201409_2">Pro Micro</a> controllers like the one pictured below because they use the same processor as the Teensy that is used in most projects.</p>
+
+<h2 id="why-this-keyboard">Why this keyboard?</h2>
+
+<p>I don&rsquo;t speak Japanese, and I don&rsquo;t really have any intention on learning it at the moment. So why this thing? To be honest, it was an impulse buy when I saw a big lot of them go on ebay for around $24 each. I bought one and then it sat in my closet for ages until this past weekend.</p>
+
+<p>The board has a ton of buttons, a nice clunky feel, and an obsolete connector, making it essentially useless without some hacking.</p>
+
+<p>Again, there is a full writeup on <a href="https://github.com/iflowfor8hours/6112884-pro-micro-controller">Github</a>, so if you&rsquo;re actually trying to accomplish this or something like it,  definitely check that out.</p>
+
+<h2 id="hacking-the-hardware">Hacking the Hardware</h2>
+
+<p>I did a mostly atrocious job of hacking this keybord right up until the very end. Desoldering the original processor was quite difficult, and took a long time because my working environment was me sitting on the floor of my room, getting frustrated with the length of the cord of my soldering iron.</p>
+
+<p>After I got it out, I threw some temporary wires in and hooked up the Pro Micro.
+<img src="http://localhost/IMG_20150903_233251.jpg" alt="Hacky shitty wiring" /></p>
+
+<p>Once I confirmed that things were working mostly as expected, I did a slightly better job in doing the permanent installation.
+<img src="http://localhost/IMG_20150905_162931.jpg" alt="Better installation" /></p>
+
+<p>After finishing that up, doing some testing and getting the software running, I put the clothes back on this board and started typing!
+<img src="http://localhost/IMG_20150905_164212.jpg" alt="Finished product!" /></p>
+
+<h2 id="notes-on-the-build">Notes on the build</h2>
+
+<p><strong>Get a good quality USB cable</strong>
+I had a couple of micro usb cables laying around that straight up worked for android phones, charging things, other keyboards, etc that would not work for programming my pro micro. Believe it. It happens.</p>
+
+<p>When I finally got to the troubleshooting phase. I used <code>xev</code> extensively to test the keys and ensure the mapping was to my liking. I found this super handy sed command on reddit for filtering the output to get less stuff. Give it a shot if you like. <code>xev</code> produces a ton of output otherwise.</p>
+
+<pre><code>xev | sed -n 's/^.*keycode *\([0-9]\+\).* * \([a-z,A-Z,0-9,_-]\+\)).*$/keycode \1 = \2 /p'
+</code></pre>
+
+<p>On mine, I had a whole row of keys that didn&rsquo;t work, so I aligned the columns in the <a href="https://github.com/iflowfor8hours/6112884-pro-micro-controller">configuration file</a> to get a better visual on what was supposed to be happening on each pin of the controller. The line below refers to what cluster of keys are connected to each pin of the pro micro. It was really helpful to line everything up so I could visually see everything while I was testing.</p>
+
+<pre><code>sense             PD1               PD0             PD4             PC6             PD7             PE6               PB4               PB5
+# 0
+muxstrobe 0     esc             TAB             Z               S                 W               2                 UNASSIGNED  UNASSIGNED  
+muxstrobe 1     1                 Q               X             D                 E             3                   UNASSIGNED  UNASSIGNED  
+</code></pre>
+
+<p>Otherwise the project went relatively well and was mostly uneventful. There are some cool things I can do with this board, like figure out how to get the speaker to do something useful, utilize the volume control, or install a USB hub or something.</p>
+
+<h2 id="attribution">Attribution</h2>
+
+<ul>
+<li>None of this would have been possible without Soarer and all the contribution he has made, and <a href="https://geekhack.org/index.php?topic=50437.msg1193047#msg1193047">this post</a> in particular.</li>
+<li>I used a really useful trick to get the pro micro into bootstrap mode that I found in <a href="https://github.com/nicholaskell/Arduino_Loader">this repository</a>. Props the that guy.</li>
+<li><a href="http://deskthority.net/workshop-f7/how-to-use-a-pro-micro-as-a-cheap-controller-converter-like-soarer-s-t8448.html">This article</a> about doing basically the same thing was helpful for all the people troubleshooting stuff in it.</li>
+<li>The reddit <a href="https://www.reddit.com/r/MechanicalKeyboards/comments/39pwlo/guidelinux_debug_your_kb_with_command_line_tools/">/r/MechanicalKeyboards</a> had that handy sed line for filtering <code>xev</code> output.</li>
+<li>As with all keyboard projects, thanks geekhack and deskauthority communities.</li>
+</ul>
+
+                </div>
+                <div class="feat share">
+                    <a href="//twitter.com/share" class="popup">
+                        <span class="icon-twitter"></span>
+                    </a>
+                </div>
+                
+                
+
+                
+                    <a rel="next" href="http://localhost/post/2015/2015-09-04-keyboard-microcontroller/" id="next">
+                        <span class="nav-title nav-title-next">Older</span> &rarr;
+                    </a>
+                
+                
+                    <a rel="prev" href="http://localhost/post/2015/2015-08-27-keyboard-snobbery/" id="prev">
+                        &larr; <span class="nav-title nav-title-prev">Newer</span>
+                    </a>
+                
+            </article>
+        </section>
+
+        <footer>
+	
+	<small>2016, matt urbanski</small>
+	
+</footer>
+    </div>
+    
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="http://localhost/js/main.js"></script>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-22586140-1', 'auto');
+ga('send', 'pageview');
+</script>
+
+
+<!-- Syntax highlighting -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</body>
+</html>

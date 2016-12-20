@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+
+
+
+ <html class="no-js"> 
+<head>
+    <title>Keyboards and how they work: The hardware inside your keyboard and the microcontroller &middot; iflowfor8hours.info</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="content-language" content="en-us" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="author" content="Matt Urbanski">
+    <meta name="description" content="devops, automation, webops and explosions.">
+    <meta name="generator" content="Hugo 0.17-DEV" />
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" type="text/css" href="http://localhost/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/styles/tomorrow.min.css" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700|Lora:400,700,400italic" rel="stylesheet" type="text/css">
+</head>
+<body>
+    
+    <div class="off-canvas">
+    <figure class="avatar">
+        <img src="http://localhost/img/avatar.jpg" title="Matt Urbanski">
+    </figure>
+    <div class="bio">
+        
+        <h1>matt urbanski</h1>
+        
+        
+        <p>Shot the horse after the door has bolted</p>
+        
+    </div>
+    <nav>
+        
+
+        <ul>
+            <li><a target="_blank" href="http://localhost/index.xml">RSS feed</a></li>
+        </ul>
+
+        
+        <h6>you can find me on the block in addition to</h6>
+        
+
+        <ul>
+        
+            <li><a target="_blank" href="mailto:matt@iflowfor8hours.info">Email</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/MattUrbanski.pdf">CV</a></li>
+        
+            <li><a target="_blank" href="//github.com/iflowfor8hours">Github</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/presentations/">Presentations and Published work</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/colophon/">Colophon and About Me</a></li>
+        
+        </ul>        
+    </nav>
+</div>
+
+    <div class="site-wrapper">
+        <header>
+	<div class="h-wrap">
+		
+		<h1 class="title"><a href="http://localhost/">iflowfor8hours.info</a></h1>
+		
+		<a class="menu-icon" title="Menu"><span class="lines"></span></a>
+	</div>
+</header>
+        
+        <section class="single-wrap">
+            <article class="single-content" itemscope itemtype="//schema.org/BlogPosting">
+                <div class="feat">
+                    <h5 class="page-date">
+                    <time datetime="" itemprop="datePublished">
+                    14. September 2015
+                    </time>
+                    </h5>
+                </div>
+                <h1 class="page-title" itemprop="name headline">Keyboards and how they work: The hardware inside your keyboard and the microcontroller</h1>
+                <div itemprop="articleBody">
+                    
+
+<p>In this post I intend to explain what is going on inside your keyboard, from the switches all the way to the operating system, where the data terminates. I hope to go into some detail about how custom controllers like <a href="https://geekhack.org/index.php?topic=17458.0">Soarer&rsquo;s convertor and controller</a>, <a href="https://github.com/kiibohd/controller">HaaTa&rsquo;s KiiboHD</a> and <a href="https://github.com/tmk/tmk_keyboard">TMK</a> (among others) work to communicate keypresses to your operating system through the USB-HID subsystem.</p>
+
+<h2 id="keyboard-switches">Keyboard Switches</h2>
+
+<p>Keyboard switches are a contentious and seemingly deep topic of discussion. Luckily for us, most of the contention is around preference and variations in feel. Most mechanical switches themselves work in nearly the same way. For an in-depth look at just about everything you need to know about switches, check out the excellent <a href="www.keyboardco.com/blog/index.php/2012/12/an-introduction-to-cherry-mx-mechanical-switches/">Introduction to Cherry MX mechanical switches</a>. There are excellent animated gifs there like the one below. They explain the inner workings and physical properties of the feel of keyboard switches.</p>
+
+<p><img src="http://localhost/Clear.gif" alt="clear switch" /></p>
+
+<p>That gif is an image of a Cherry MX Clear switch, and it shows what is going on inside the switch. There are only really two components in the switch that matter for the actuation. In that image, the plastic part in between the folded metal piece on the left side of the image is of the switch is the actuator. The leaf is the moving metal bit which controls the contact and continouity of the current moving through the switch.
+When the actuator drops, the leaf of the switch touches the stem momentarialy and continuity is restored. This is communicated to the controller, which decides what to do about it. In most cases it emits a KeyPress event. When your finger leaves the switch and the actuator separates the leaf again, there is a KeyRelease event. There is a good wiki post on this <a href="http://deskthority.net/wiki/Switch_terminology">on Deskauthority</a>.</p>
+
+<p>There is also the outstanding post on the <a href="http://www.wasdkeyboards.com/mechanical-keyboard-guide">WASD website</a> which explains the differences in switches, mounting, and their actuation. You should breeze through that as well.</p>
+
+<p>What is important to understand is that the switches themselves are just that. Momentary contact switches. Their objective is to momentarily allow the flow of current through a circuit using the actuator to connect the leaf and stem. The release of the button shold break that contact.</p>
+
+<p>This is soley talking about mechnical keyboard switches, as there are many other ways to indicate this to a circuit. The articles on the deskthority wiki on <a href="http://deskthority.net/wiki/Contact_mechanism">Contact Mechanisim</a> and <a href="http://deskthority.net/wiki/Switch_terminology">Switch Terminology</a> are good resources to read up on this topic.</p>
+
+<h2 id="internal-wiring">Internal Wiring</h2>
+
+<p>The switches in a keyboard are wired in a matrix configuration as shown below. This means in serial, one switch after the next, on the same bus as the previous. In the gif, the &ldquo;A&rdquo; key is pressed, as the switch is in the closed state, signaling to the microcontroller that the key has been pressed. There is a bit of knowledge one needs to have about muxing and diodes, and how they work together to fully understand how a one could have a controller with fewer pins than switches could accurately represent the states of all the switches, all the time.</p>
+
+<p><img src="http://localhost/switchinternal.gif" alt="switch matrix" /></p>
+
+<p>Let us have a look at our hypothetical diagram above, and pretend we have a keyboard with these four switches, [&ldquo;A&rdquo;, &ldquo;B&rdquo;, &ldquo;C&rdquo;, &ldquo;D&rdquo;]. If A, D and B are pressed at the same time, the entire circuit is complete, and despite not pressing it, the C switch goes hot. The diagram below illustrates that. The reason this happens is because the current is flowing in both directions when the circuit is complete on either side, due to the nature of it being wired in serial.</p>
+
+<p><img src="http://localhost/everythinghot.gif" alt="all switches hot ghosting effect" /></p>
+
+<p>The purpose of a diode is to ensure that electrical current can only flow in one direction. A diode will block the current from flowing up the unintended leg of another simultenious or near simultenious keypress, as illustrated in the circuit below.</p>
+
+<p><img src="http://localhost/nkro.gif" alt="n key rollover with diodes" /></p>
+
+<p>Mind you, these diagrams were made by <a href="http://www.overclock.net/t/491752/official-mechanical-keyboard-guide">Manyak on the overclockers.net forum</a>. It is a great resource. RIP forums as the source of all the knowledge on the internet.</p>
+
+<h2 id="keyboard-hardware-and-internals">Keyboard Hardware and Internals</h2>
+
+<p>If the <a href="http://localhost/12keykeyboard.jpg">schematic</a> in the previous part was not very helpful for understanding what is going on inside the keyboard, I found some excellent pictures from a custom keyboard build by a user named <a href="http://deskthority.net/workshop-f7/brownfox-step-by-step-t6050.html">matt3o on the deskauthority forums</a>. He took a lot of excellent photos while building his brownfox keyboard.</p>
+
+<p>First, he wired the switches in rows, using diodes.
+<img src="http://localhost/rowsdetail.jpg" alt="Detail of rows of switches" /></p>
+
+<p>As you can see from further away, they are wired in serial and do not terminate anywhere yet.
+<img src="http://localhost/rows.jpg" alt="Rows fully wired" /></p>
+
+<p>Next, the columns were wired up, also in serial. He used insulation to keep the vertical wires from touching the exposed wiring of the diode legs. He passed the wiring underneath to keep it neat and easily debuggable if something went wrong. This mirrors the illustration above.
+<img src="http://localhost/rowsandcolumnswired.jpg" alt="Rows and Columns fully wired" /></p>
+
+<p>Lastly, he wired the individual rows and columns to to a microcontroller. In this case a Teensy 2.0, commonly used in keyboard projects because of its small size and the availability of good, open-source and battle tested firmware available for it. The high number of inputs and low power consumption are also key factors in this decision.
+<img src="http://localhost/controllerfullywired.jpg" alt="Controller wired up" /></p>
+
+<h2 id="the-microcontroller">The microcontroller</h2>
+
+<p>Heading back inside the keyboard, we can think about the microcontroller in 3 discrete components:</p>
+
+<p><img src="http://localhost/switches-diagram.png" alt="Switches Diagram" /></p>
+
+<ul>
+<li><p><em>The scan module:</em> This takes the state of the keys on the board and turns them into scancodes for the translation module to interpret. Most of the time, when customizing a keyboard in hardware, the layering and most of the configuration happens here.</p></li>
+
+<li><p><em>The translation module:</em> This module of code takes the scancodes and maps them to USB-HID output codes, or whatever sort of output you might want like midi or physical interfaces. USB-HID being the most likely for keyboards. This is can also be known as the macro module.</p></li>
+
+<li><p><em>The output module:</em> This sends signals to the device it is attached to over the protocol decided in the translation module, again most often USB, but in the cases of Soarer&rsquo;s convertor, it can output many different kinds of proprietary keyboard protocols.</p></li>
+</ul>
+
+<p>The image is from the great <a href="https://www.massdrop.com/article/introduction-to-keyboard-programming">Massdrop article</a> by HaaTa (registration annoyingly required). I hope to go into a bit more detail about the specifics of how the firmware communicates with the HID subsystem, the kernel, your window manager, and eventually whatever application is using it.</p>
+
+<h2 id="what-is-usb-hid">What is USB-HID?</h2>
+
+<p>USB HID is the <a href="https://en.wikipedia.org/wiki/USB_human_interface_device_class">Human Interface Device</a> standard used by USB to deal with interfaces devices.</p>
+
+<p>The HID standard specifies a set of descriptors and protocols that the author of a device driver or any of software can choose what to do with. This gives a great level of flexibility in what HID can be used for. A simple example would be a two button mouse. Once a device negotiates with HID that it is a mouse, HID provides an interface that allows the mouse to specify a very limited number of variables as they come through the hardware to the HID. Namely the state of the two buttons, and the X and Y displacement. Driver authors and hardware manufacturers can extend this to other functionality your mouse probably has, like a scrollwheel and a third button, but HID takes care of the basic hardware to host communication.</p>
+
+<p>This topic can be researched quite easily if you are interested by reading the <a href="http://www.usb.org/developers/hidpage/">standard itself</a> if that kind of thing is up your alley. I found this aptly named resource to be particularly helpful, <a href="http://www.usbmadesimple.co.uk/ums_5.htm">USB Made Simple</a>.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Those are the essential hardware components of any keyboard. Some switches, a wiring matrix and a controller. The controller is the most interesting component by far, and I&rsquo;ll dive into some of the code next time around.</p>
+
+                </div>
+                <div class="feat share">
+                    <a href="//twitter.com/share" class="popup">
+                        <span class="icon-twitter"></span>
+                    </a>
+                </div>
+                
+                
+
+                
+                    <a rel="next" href="http://localhost/post/2015/2015-09-18-london-arrival-guide/" id="next">
+                        <span class="nav-title nav-title-next">Older</span> &rarr;
+                    </a>
+                
+                
+                    <a rel="prev" href="http://localhost/post/2015/2015-09-07-hacking-6112884/" id="prev">
+                        &larr; <span class="nav-title nav-title-prev">Newer</span>
+                    </a>
+                
+            </article>
+        </section>
+
+        <footer>
+	
+	<small>2016, matt urbanski</small>
+	
+</footer>
+    </div>
+    
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="http://localhost/js/main.js"></script>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-22586140-1', 'auto');
+ga('send', 'pageview');
+</script>
+
+
+<!-- Syntax highlighting -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</body>
+</html>

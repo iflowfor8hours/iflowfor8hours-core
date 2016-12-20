@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+
+
+
+ <html class="no-js"> 
+<head>
+    <title>Puppet Vim Development Environment &middot; iflowfor8hours.info</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="content-language" content="en-us" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="author" content="Matt Urbanski">
+    <meta name="description" content="devops, automation, webops and explosions.">
+    <meta name="generator" content="Hugo 0.17-DEV" />
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" type="text/css" href="http://localhost/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/styles/tomorrow.min.css" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700|Lora:400,700,400italic" rel="stylesheet" type="text/css">
+</head>
+<body>
+    
+    <div class="off-canvas">
+    <figure class="avatar">
+        <img src="http://localhost/img/avatar.jpg" title="Matt Urbanski">
+    </figure>
+    <div class="bio">
+        
+        <h1>matt urbanski</h1>
+        
+        
+        <p>Shot the horse after the door has bolted</p>
+        
+    </div>
+    <nav>
+        
+
+        <ul>
+            <li><a target="_blank" href="http://localhost/index.xml">RSS feed</a></li>
+        </ul>
+
+        
+        <h6>you can find me on the block in addition to</h6>
+        
+
+        <ul>
+        
+            <li><a target="_blank" href="mailto:matt@iflowfor8hours.info">Email</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/MattUrbanski.pdf">CV</a></li>
+        
+            <li><a target="_blank" href="//github.com/iflowfor8hours">Github</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/presentations/">Presentations and Published work</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/colophon/">Colophon and About Me</a></li>
+        
+        </ul>        
+    </nav>
+</div>
+
+    <div class="site-wrapper">
+        <header>
+	<div class="h-wrap">
+		
+		<h1 class="title"><a href="http://localhost/">iflowfor8hours.info</a></h1>
+		
+		<a class="menu-icon" title="Menu"><span class="lines"></span></a>
+	</div>
+</header>
+        
+        <section class="single-wrap">
+            <article class="single-content" itemscope itemtype="//schema.org/BlogPosting">
+                <div class="feat">
+                    <h5 class="page-date">
+                    <time datetime="" itemprop="datePublished">
+                    25. August 2011
+                    </time>
+                    </h5>
+                </div>
+                <h1 class="page-title" itemprop="name headline">Puppet Vim Development Environment</h1>
+                <div itemprop="articleBody">
+                    
+
+<p>This assumes that we&rsquo;re running linux, vim is your main editor and you are comfortable in it, and bzr is the vcs you are using.</p>
+
+<p>Install puppet, facter, and bzr on your local box:</p>
+
+<pre><code>sudo apt-get install puppet facter bzr
+</code></pre>
+
+<p>On the vim side of things, you need to install a few plugins to make your life easier.</p>
+
+<p><a href="http://http://www.vim.org/scripts/script.php?script_id=1658">NERDTree</a> for file navigation</p>
+
+<p><a href="http://www.vim.org/scripts/script.php?script_id=2540">Snipmate</a> to make it more difficult for you to forget commas in manifests</p>
+
+<p><a href="http://www.vim.org/scripts/script.php?script_id=90">VCSPlugin</a>, because you will be working with bzr in our case, but you can use whatever VCS you please</p>
+
+<p>You also need the puppet <a href="http://www.devco.net/code/puppet.snippets">snippet</a> file, which is a good start, but editing it will get you far. I have one that I have added a few sections to that I will publish to my github. The link is at the top of this page. This goes in <code>~/.vim/snippets/</code></p>
+
+<p>For bzr we need to add a few plugins as well.</p>
+
+<p>Put the following script into your ~/.bazaar/plugins directory, chmod +x it and name it <code>pre_commit.py</code></p>
+
+<pre><code>#!/usr/bin/env python
+#
+# BZR pre-commit hook, which will run some basic syntax checking on manifests
+# in the current branch.
+#
+# To use this script, place it in your ~/.bazzar/plugins directory (create
+# this directory if it doesn't exist).
+#
+from bzrlib import branch
+import os
+import sys
+import subprocess
+def get_branch_root(directory):
+    &quot;&quot;&quot;Find the root directory of the current BZR branch.&quot;&quot;&quot;
+    while os.path.exists(directory):
+        if os.path.exists(os.path.join(directory, '.bzr')):
+            return directory
+        if directory == '/':
+            break
+        (parent, dir) = os.path.split(directory)
+        directory = parent
+    print &quot;Commit FAILED:  Can't locate BZR Root.&quot;
+    sys.exit(1)
+def check_puppet_syntax(local, master, old_revno, old_revid, future_revno,
+                       future_revid, tree_delta, future_tree):
+    &quot;&quot;&quot;This will run some basic syntax checking on the puppet manifests.&quot;&quot;&quot;
+    # Check syntax on changed files
+    errors = []
+    os.chdir(get_branch_root(os.getcwd()))
+    print &quot;\n&quot; # make some space so we aren't clobbered by bzr's status msgs
+    for file in tree_delta.added + tree_delta.renamed + tree_delta.modified:
+        file = file[0]
+        if file.endswith(&quot;.pp&quot;):
+            print &quot;Checking syntax in: %s&quot; % (file)
+            try:
+                process = subprocess.Popen([&quot;puppet&quot;, &quot;parser&quot;, &quot;validate&quot;, file],
+                    stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+                process.wait()
+                if process.returncode != 0:
+                    errors.append((file, ''.join(process.stdout.readlines())))
+            except OSError, e:
+                print &quot;\n\n Error: failed to execute 'puppet': %s&quot; % (e)
+                sys.exit(1)
+    if errors:
+        print &quot;\nSyntax errors were found:\n&quot;
+        for error in errors:
+            print &quot;%s: %s&quot; % (error[0], error[1]),
+        print &quot;\nCommit FAILED&quot;
+        sys.exit(1)
+    else:
+        print &quot;\nAll syntax checks PASSED&quot;
+# This is where the magic happens
+branch.Branch.hooks.install_named_hook('pre_commit', check_puppet_syntax,
+                                       'Check puppet manifests for syntax errors.')
+</code></pre>
+
+<p>You also need the bzr push-and-update plugin. This allows you to (obviously) push your changes and update a working tree elsewhere in one command. It&rsquo;s annoying to have to run to your puppetmaster box and type <code>bzr up</code> every time your push a change.</p>
+
+<pre><code>cd ~/.bazaar/plugins
+bzr branch lp:bzr-push-and-update
+</code></pre>
+
+<p>Now in the browser:</p>
+
+<p>If you&rsquo;re just starting out, having this open builds confidence and gets you past some of the head banging associated with the teething problems in puppet. Most of the stuff mentioned in this doc we&rsquo;re already past, but it&rsquo;s a good reference anyway.
+<a href="http://bitcube.co.uk/content/puppet-errors-explained">http://bitcube.co.uk/content/puppet-errors-explained</a></p>
+
+<p>Always keep this open somewhere, its the type reference that you will be building with:
+<a href="http://docs.puppetlabs.com/references/2.7.0/type.html">http://docs.puppetlabs.com/references/2.7.0/type.html</a></p>
+
+<p>I can&rsquo;t say enough nice things about this guy&rsquo;s blog. When I was searching for answers on how to do things I consistently came across it. A great resource:
+<a href="http://www.devco.net/">http://www.devco.net/</a></p>
+
+<p>I also always idle in the #puppet irc channel on freenode. Helpful folks there. I&rsquo;m abetterlie there, but there are many people far more knowledgeable and helpful than I am idling there.</p>
+
+<p>Now you can start developing on your local box. To test modules or just about anything, you can use</p>
+
+<pre><code>puppet --debug --verbose modules/common/manifests/init.pp
+</code></pre>
+
+<p>This checks syntax and performs whatever you have in that init.pp and spits very useful debug information.</p>
+
+<p>If you just want to check the syntax, you can use:</p>
+
+<pre><code>puppet --parseonly *.pp
+</code></pre>
+
+<p>This isn&rsquo;t completely necessary, as the bzr plugin checks the syntax for you, but it&rsquo;s helpful to know if you&rsquo;re not sure when something is correct. I&rsquo;m working on puppet syntax highlighting for vim at the moment. Should have something out soon.</p>
+
+<p>When you&rsquo;re testing between clients and the puppetmaster, run the puppetmaster like so:</p>
+
+<pre><code>puppet master --verbose --logdest console --no-daemonize
+</code></pre>
+
+<p>This keeps the master in the foreground and you may watch everything it&rsquo;s doing.</p>
+
+<p>On the client:</p>
+
+<pre><code>puppetd --debug --verbose --logdest console --no-daemonize --server puppetmaster.vo-stage.srfarm.net
+</code></pre>
+
+<p>You can also ad the <code>--noop</code> flag if you want it to dry run instead.</p>
+
+<p>When you are ready to push changes, do a</p>
+
+<pre><code>bzr commit -m &quot;commit message&quot;
+bzr push bzr+ssh://root@192.168.12.164/etc/puppet
+</code></pre>
+
+<p>This should push the changes and update the tree on the puppetmaster, if you have the push-and-update plugin for bzr installed.</p>
+
+<h1 id="puppet-structure">Puppet structure</h1>
+
+<p>The best source of ideas of how to structure your puppet modules and infrastructure, I have seen is definitely in the <a href="http://www.github.com/example42">example42 git repo</a></p>
+
+<p>The way they do it is easiest to understand if looked at like so:</p>
+
+<pre><code>site.pp
+-medium/site.pp
+--baselines/minimal.pp
+--modules/$modulename/manifests/init.pp
+--nodes/staging.farm.net.pp
+-roles/*.pp
+</code></pre>
+
+<h3 id="handy-general-debugging-commands">Handy general debugging commands</h3>
+
+<p>To clean Certificates for a single client:
+On the server:
+<code>puppetca --clean client.hostname</code>
+On the client:</p>
+
+<pre><code>rm -rf /etc/puppet/ssl/certs/*
+rm -rf /etc/puppet/ssl/private_keys/*
+rm -rf /etc/puppet/ssl/certificate_requests/*
+rm -rf /etc/puppet/ssl/public_keys/*
+</code></pre>
+
+<p>To test snippets of code:</p>
+
+<pre><code>puppet --debug --verbose test.pp /*
+</code></pre>
+
+                </div>
+                <div class="feat share">
+                    <a href="//twitter.com/share" class="popup">
+                        <span class="icon-twitter"></span>
+                    </a>
+                </div>
+                
+                
+
+                
+                    <a rel="next" href="http://localhost/post/2011/2011-08-25-movedtojekyll/" id="next">
+                        <span class="nav-title nav-title-next">Older</span> &rarr;
+                    </a>
+                
+                
+                    <a rel="prev" href="http://localhost/post/2011/2011-08-25-removing-unity-from-ubuntu/" id="prev">
+                        &larr; <span class="nav-title nav-title-prev">Newer</span>
+                    </a>
+                
+            </article>
+        </section>
+
+        <footer>
+	
+	<small>2016, matt urbanski</small>
+	
+</footer>
+    </div>
+    
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="http://localhost/js/main.js"></script>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-22586140-1', 'auto');
+ga('send', 'pageview');
+</script>
+
+
+<!-- Syntax highlighting -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</body>
+</html>

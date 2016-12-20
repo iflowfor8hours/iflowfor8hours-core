@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+
+
+
+ <html class="no-js"> 
+<head>
+    <title>The path to production and overengineering &middot; iflowfor8hours.info</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="content-language" content="en-us" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="author" content="Matt Urbanski">
+    <meta name="description" content="devops, automation, webops and explosions.">
+    <meta name="generator" content="Hugo 0.17-DEV" />
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" type="text/css" href="http://localhost/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/styles/tomorrow.min.css" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700|Lora:400,700,400italic" rel="stylesheet" type="text/css">
+</head>
+<body>
+    
+    <div class="off-canvas">
+    <figure class="avatar">
+        <img src="http://localhost/img/avatar.jpg" title="Matt Urbanski">
+    </figure>
+    <div class="bio">
+        
+        <h1>matt urbanski</h1>
+        
+        
+        <p>Shot the horse after the door has bolted</p>
+        
+    </div>
+    <nav>
+        
+
+        <ul>
+            <li><a target="_blank" href="http://localhost/index.xml">RSS feed</a></li>
+        </ul>
+
+        
+        <h6>you can find me on the block in addition to</h6>
+        
+
+        <ul>
+        
+            <li><a target="_blank" href="mailto:matt@iflowfor8hours.info">Email</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/MattUrbanski.pdf">CV</a></li>
+        
+            <li><a target="_blank" href="//github.com/iflowfor8hours">Github</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/presentations/">Presentations and Published work</a></li>
+        
+            <li><a target="_blank" href="//www.iflowfor8hours.info/page/colophon/">Colophon and About Me</a></li>
+        
+        </ul>        
+    </nav>
+</div>
+
+    <div class="site-wrapper">
+        <header>
+	<div class="h-wrap">
+		
+		<h1 class="title"><a href="http://localhost/">iflowfor8hours.info</a></h1>
+		
+		<a class="menu-icon" title="Menu"><span class="lines"></span></a>
+	</div>
+</header>
+        
+        <section class="single-wrap">
+            <article class="single-content" itemscope itemtype="//schema.org/BlogPosting">
+                <div class="feat">
+                    <h5 class="page-date">
+                    <time datetime="" itemprop="datePublished">
+                    26. May 2016
+                    </time>
+                    </h5>
+                </div>
+                <h1 class="page-title" itemprop="name headline">The path to production and overengineering</h1>
+                <div itemprop="articleBody">
+                    
+
+<h4 id="the-path-to-production-is-beset-on-all-sides-by-the-inequity-of-the-good-intentioned-selfish-and-tyrrany-of-overengineering-ezekiel-25-17"><em>&ldquo;The path to production is beset on all sides by the inequity of the good-intentioned selfish and tyrrany of overengineering.&rdquo;</em> Ezekiel 25:17</h4>
+
+<p>The core of many development organizations is a desire to innovate technologically and maintain quality. A key factor of keeping up with the cutting edge is to accelerate development and maximize the productivity of your teams, which is often wrapped in the implementation of a build and deploy pipeline.</p>
+
+<p>Development teams need a pipeline that automatically runs tests, runs builds, maintains artifacts, configures applications, and manages deployments and promotions through their environments. These are the functional requirements of a pipeline. The acceptance criteria are that development is accelerated, and developer and operational experience of deployments are consistent and high quality. Core functionality of the pipeline is ensuring artifacts go from environment to environment reliably and repeatably so that risk is reduced. It is also a powerful tool for maintaining the discipline and health of the project when used properly.</p>
+
+<h3 id="scope-creep-and-value-propositions">Scope creep and value propositions</h3>
+
+<p>There are other requirements that may creep in such as tracking bugs and releases, integrating operational metrics from the application, adding business metrics around revenue or market events, and tracing quality or other characteristics from their version control system or other sources. These are <em>nice-to-haves</em> in the first version of your pipeline and should be summarily sent to the backlog before discussions get too detailed.</p>
+
+<p>Many companies design their pipelines around their development environment, citing specifics about their processes or technologies that require attention. These are technology-based decisions around build systems, testing frameworks, and integration with internal systems of record for releases. I caution that these are considerations for after the pipeline has proven to provide some value.</p>
+
+<p>The value proposition of a pipeline begins to fade into the background as the technical details and toolset of the pipeline are decided upon. This is a slippery slope in any project, but especially toxic in infrastructure projects, where the customers and stakeholders of the project are often ill-defined or self-referential. By this I mean that the needs of internal customers, especially development teams are particularly difficult to extract.</p>
+
+<h4 id="the-ideal-pipeline-is-an-unopinionated-orchestration-of-independent-tools-workflows-and-environmental-constraints-whose-output-is-configured-running-software"><em>The ideal pipeline is an unopinionated orchestration of independent tools, workflows, and environmental constraints whose output is configured, running software.</em></h4>
+
+<p>The purpose of a pipeline is to continuously deliver high-quality software. As the complexity of the software or number of components increases, the CI pipeline should reduce complexity by having an established and repeatable path to production.</p>
+
+<h3 id="mitigating-the-risks-of-overengineering">Mitigating the risks of overengineering</h3>
+
+<p>As developers, we often strive to build the most generic and flexible system possible, to enable other developers to make responsible decisions for themselves. After all, they know their software better and are therefore poised to make the best decisions for the code. The ideal pipeline is an unopinionated orchestration of independent tools, workflows, and environmental constraints whose output is working, running software.</p>
+
+<p>This quote by Joel Moses encapsulates the risks of overengineering very well. An interesting piece of related trivia is that the ◇ character allowed multiple statements per line of text; it was APL&rsquo;s semicolon.</p>
+
+<h4 id="apl-is-like-a-beautiful-diamond-flawless-beautifully-symmetrical-but-you-can-t-add-anything-to-it-if-you-try-to-glue-on-another-diamond-you-don-t-get-a-bigger-diamond-lisp-is-like-a-ball-of-mud-add-more-and-it-s-still-a-ball-of-mud-it-still-looks-like-lisp"><em>APL is like a beautiful diamond - flawless, beautifully symmetrical. But you can&rsquo;t add anything to it. If you try to glue on another diamond, you don&rsquo;t get a bigger diamond. Lisp is like a ball of mud. Add more and it&rsquo;s still a ball of mud - it still looks like Lisp.</em></h4>
+
+<p>As experienced DevOps practicioners and developers, this is what we want. A loosely-coupled system that provides the abstractions to do just about anything in respect to building, testing, and releasing software. Jenkins and TeamCity are CI servers, built around the concepts of projects, artifacts, workspaces, and nodes. However, this abstraction is very limited and the concepts are inherently stateful, whereas with CD tools that understand these principles, developers are freed from CI-only abstractions.</p>
+
+<p>GoCD and concourse.ci take a higher-level conceptual view and allows users to express the complex relationships of dependent pipelines, determine the order in which artifacts must be built, and understand triggers based on their context. They use a small number of general concepts to encapsulate the intention and capture the value of the pipeline. Resources, jobs, and tasks with inputs and outputs are the primitives used to describe pipelines. This is actually far simpler and less error prone than the <a href="https://larrycuban.wordpress.com/2010/06/08/the-difference-between-complicated-and-complex-matters/"><strong>complicated</strong> nature</a> of plugins, frameworks, languages, and tools that a CI server has to deal with. The CD-aware toolchain expresses simple abstractions using the above concepts, pushing the complexity that CI is traditionally responsible for, to developers and users of the pipeline. This is where a strong conceptual model and framework of what your pipeline should accomplish is necessary for success.</p>
+
+<h3 id="migration-of-complexity">Migration of Complexity</h3>
+
+<p>It is important to note that this shift in where the complexity lies is the key consideration in different build and deployment pipeline paradigms. There is a critical designation between runtime complexity and compile-time complexity. How that is handled is paramount to a successful CD strategy.</p>
+
+<p>The widespread use of containers and microservices has accelerated the pattern of moving compile-time complexity on to the developer and away from the operations team far past the humble beginnings of <a href="http://12factor.net">Heroku&rsquo;s 12 factor</a> app philosophy. Conversely, this pushes runtime complexity (scaling, monitoring, security, redundancy) further away from the developer and onto the operations team. Developers may see this as losing control of their applications, and in some ways it is a sacrifice of freedom for safety. The operations team now needs to have service discovery working reliably, good configuration management, and well-abstracted data layers for other applications to consume. A very high level of operational maturity is required for this to work, let alone to begin paying dividends.</p>
+
+<p>Creating a good foundation is critical, however a balance of usefulness to developers and graceful operational orthodoxy must be struck and that balance is only known by you in your environment.</p>
+
+                </div>
+                <div class="feat share">
+                    <a href="//twitter.com/share" class="popup">
+                        <span class="icon-twitter"></span>
+                    </a>
+                </div>
+                
+                
+
+                
+                    <a rel="next" href="http://localhost/post/2016/2016-12-06-migrating-to-containers/" id="next">
+                        <span class="nav-title nav-title-next">Older</span> &rarr;
+                    </a>
+                
+                
+                    <a rel="prev" href="http://localhost/post/2015/2015-09-18-london-arrival-guide/" id="prev">
+                        &larr; <span class="nav-title nav-title-prev">Newer</span>
+                    </a>
+                
+            </article>
+        </section>
+
+        <footer>
+	
+	<small>2016, matt urbanski</small>
+	
+</footer>
+    </div>
+    
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="http://localhost/js/main.js"></script>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-22586140-1', 'auto');
+ga('send', 'pageview');
+</script>
+
+
+<!-- Syntax highlighting -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</body>
+</html>
